@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Chat Room</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+/* Sidebar */
+#sidebar {
+    width: 250px;
+    background-color: #2f2f2f;
+    color: white;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+#sidebar h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #444;
+}
+.chat-room-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #3f3f3f;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: white;
+}
+.chat-room-item:hover {
+    background-color: #505050;
+    text-decoration: none;
+    color: white;
+}
+.chat-room-item.active {
+    background-color: #4a76a8;
+}
+.unread-count {
+    background-color: #ff4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.create-room-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+}
+.create-room-btn:hover {
+    background-color: #388E3C;
+    text-decoration: none;
+    color: white;
+}
+
+/* Chat area */
+#chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+/* Header */
+#chat-header {
+    background-color: #4a4a4a;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#room-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+#room-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+.room-type-badge {
+    background-color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+#header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#mark-as-read-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+#mark-as-read-button:hover {
+    background-color: #388E3C;
+}
+#mark-as-read-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+.home-link {
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    font-size: 14px;
+}
+.home-link:hover {
+    background-color: rgba(255,255,255,0.1);
+    text-decoration: none;
+    color: white;
+}
+.members-button {
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+.members-button:hover {
+    background-color: #3a5a80;
+}
+
+/* Chat log */
+#chat-log-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.message {
+    max-width: 70%;
+    padding: 12px;
+    margin: 4px 0;
+    border-radius: 12px;
+    word-wrap: break-word;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.message.self {
+    align-self: flex-end;
+    background-color: #4a76a8;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+.message.other {
+    align-self: flex-start;
+    background-color: #f1f0f0;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+.message.system {
+    align-self: center;
+    background-color: #e0e0e0;
+    color: #555;
+    text-align: center;
+    font-style: italic;
+    border-radius: 20px;
+    padding: 8px 15px;
+    max-width: 90%;
+}
+.message small {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Input area */
+#chat-input-container {
+    display: flex;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    gap: 10px;
+}
+#chat-message-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 25px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+#chat-message-input:focus {
+    border-color: #4a76a8;
+    box-shadow: 0 0 0 2px rgba(74, 118, 168, 0.2);
+}
+#chat-message-submit {
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+#chat-message-submit:hover {
+    background-color: #3a5a80;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background-color: #fefefe;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
+.close-button {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #555;
+}
+.members-list {
+    list-style-type: none;
+    padding: 0;
+}
+.members-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.members-list li:last-child {
+    border-bottom: none;
+}
+.online-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    display: inline-block;
+    margin-left: 8px;
+}
+.online-status.online {
+    background-color: #4CAF50;
+}
+.tag {
+    font-size: 12px;
+    background-color: #ddd;
+    color: #555;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+/* Scrollbar personalizada */
+#chat-log-container::-webkit-scrollbar {
+    width: 6px;
+}
+#chat-log-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+#chat-log-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+#chat-log-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h3>Salas de Chat</h3>
+        <a href="{% url 'create_room' %}" class="create-room-btn">Nova Sala</a>
+    </div>
+
+    <div id="chat-room-list">
+        {% for room in chat_rooms %}
+        <a href="{% url 'chat_room' room.name %}" class="chat-room-item {% if room.name == room_name %}active{% endif %}" data-room-name="{{ room.name }}">
+            <span>{{ room.name }}</span>
+            {% if room.unread_count > 0 %}
+            <span class="unread-count">{{ room.unread_count }}</span>
+            {% endif %}
+        </a>
+        {% empty %}
+        <p style="color: #ccc; font-style: italic;">Nenhuma sala disponível</p>
+        {% endfor %}
+    </div>
+
+    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #444;">
+        <a href="{% url 'chat_home' %}" style="color: #ccc; text-decoration: none; display: block; padding: 8px; border-radius: 4px; background-color: #3f3f3f;">
+            🏠 Página Inicial
+        </a>
+    </div>
+</div>
+
+<div id="chat-area">
+    <div id="chat-header">
+        <div id="room-info">
+            <span id="room-name">{{ room_name }}</span>
+            <span class="room-type-badge">
+                {% if room.is_private %}🔒 Privada{% else %}🌐 Pública{% endif %}
+            </span>
+            {% if current_room_members %}
+            <button id="members-button" class="members-button">
+                👥 {{ current_room_members.total_members }} Membro{{ current_room_members.total_members|pluralize }}
+            </button>
+            {% endif %}
+        </div>
+        <div id="header-actions">
+            <a href="{% url 'chat_home' %}" class="home-link">🏠 Início</a>
+            <button id="mark-as-read-button" onclick="markMessagesAsRead()">
+                ✅ Marcar como lidas
+            </button>
+        </div>
+    </div>
+
+    <div id="chat-log-container">
+{% for message in messages %}
+<div class="message {% if message.is_system_message %}system{% elif message.author == request.user %}self{% else %}other{% endif %}"
+     data-message-id="{{ message.id }}">
+    {% if not message.is_system_message %}
+        <strong>{{ message.author.username }}:</strong>
+    {% endif %}
+    {{ message.content }}<br>
+    <small>{{ message.timestamp|date:"H:i" }}</small>
+
+    {% if not message.is_read_by_user and message.author != request.user %}
+    <div class="unread-badge" style="
+        background-color: #ff4444;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 10px;
+        margin-top: 5px;
+        display: inline-block;
+    ">
+        Não lida
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if unread_count > 0 %}
+<div class="unread-summary" style="
+    text-align: center;
+    background: linear-gradient(135deg, #ff4444, #ff6b6b);
+    color: white;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    font-weight: bold;
+">
+    📌 {{ unread_count }} mensagem{{ unread_count|pluralize }} não lida{{ unread_count|pluralize }}
+</div>
+{% endif %}
+    </div>
+
+    <div id="chat-input-container">
+        <input id="chat-message-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off">
+        <button id="chat-message-submit">Enviar</button>
+    </div>
+</div>
+
+{% if current_room_members %}
+<div id="members-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeMembersModal()">&times;</span>
+        <h3>Membros da Sala</h3>
+        <ul class="members-list">
+            {% for member in current_room_members.members %}
+            <li>
+                <span>{{ member.user }}</span>
+                {% if member.user == current_room_members.created_by %}
+                <span class="tag">{{ member.user }} (criador)</span>
+                {% endif %}
+                <span class="online-status {% if member.is_online %}online{% endif %}"></span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<script>
+const chatLogContainer = document.getElementById('chat-log-container');
+const chatInput = document.getElementById('chat-message-input');
+const chatSubmit = document.getElementById('chat-message-submit');
+const chatRoomList = document.getElementById('chat-room-list');
+const markAsReadButton = document.getElementById('mark-as-read-button');
+
+// Modal
+const membersButton = document.getElementById('members-button');
+const membersModal = document.getElementById('members-modal');
+const closeButton = document.querySelector('.close-button');
+
+// Inicializar WebSocket
+const roomName = "{{ room_name }}";
+const username = "{{ request.user.username }}";
+const userId = parseInt("{{ request.user.id }}");
+
+const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+);
+
+// Eventos do WebSocket
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    handleWebSocketMessage(data);
+};
+
+chatSocket.onopen = function() {
+    console.log('Conexão WebSocket estabelecida');
+};
+
+chatSocket.onclose = function() {
+    console.log('Conexão WebSocket fechada');
+};
+
+chatSocket.onerror = function(error) {
+    console.error('Erro WebSocket:', error);
+};
+
+// Manipulador de mensagens WebSocket
+function handleWebSocketMessage(data) {
+    switch(data.type) {
+        case 'chat_message':
+            addMessageToLog(data);
+            break;
+
+        case 'user_activity':
+            handleUserActivity(data);
+            break;
+
+        case 'unread_count_update':
+            // Novo caso para atualizar a contagem e reordenar a sidebar
+            updateUnreadCounts(data.room_data);
+            break;
+
+        case 'error':
+            showError(data.message);
+            break;
+    }
+}
+
+// Funções de manipulação de mensagens
+function addMessageToLog(data) {
+    const div = document.createElement('div');
+
+    // Adiciona a classe 'system' para mensagens do sistema
+    if (data.is_system_message) {
+        div.classList.add('message', 'system');
+        div.innerHTML = `
+            ${data.message}<br>
+            <small>${formatTimestamp(data.timestamp)}</small>
+        `;
+    } else {
+        div.classList.add('message');
+        div.classList.add(data.author === username ? 'self' : 'other');
+        div.innerHTML = `
+            <strong>${data.author}:</strong> ${data.message}<br>
+            <small>${formatTimestamp(data.timestamp)}</small>
+        `;
+    }
+
+    div.setAttribute('data-message-id', data.message_id);
+    chatLogContainer.appendChild(div);
+    scrollToBottom();
+}
+
+// Funções de UI
+function scrollToBottom() {
+    chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Reconstroi a barra lateral com os novos dados de sala, atualizando a ordem e contagem.
+ * @param {Array} roomData - Lista de objetos de sala com a nova contagem e ordem.
+ */
+function renderSidebar(roomData) {
+    // Limpa a barra lateral atual
+    chatRoomList.innerHTML = '';
+
+    // Adiciona os itens de sala com base nos novos dados
+    roomData.forEach(room => {
+        const roomLink = document.createElement('a');
+        roomLink.href = `{% url 'chat_room' room.name %}`;
+        roomLink.classList.add('chat-room-item');
+
+        // Adiciona a classe 'active' se for a sala atual
+        if (room.name === roomName) {
+            roomLink.classList.add('active');
+        }
+
+        const roomNameSpan = document.createElement('span');
+        roomNameSpan.textContent = room.name;
+        roomLink.appendChild(roomNameSpan);
+
+        // Adiciona o badge de não lidas se a contagem for maior que 0
+        if (room.unread_count > 0) {
+            const unreadBadge = document.createElement('span');
+            unreadBadge.classList.add('unread-count');
+            unreadBadge.textContent = room.unread_count;
+            roomLink.appendChild(unreadBadge);
+        }
+
+        chatRoomList.appendChild(roomLink);
+    });
+
+    // Se a lista estiver vazia, adiciona a mensagem padrão
+    if (roomData.length === 0) {
+        const noRooms = document.createElement('p');
+        noRooms.style = "color: #ccc; font-style: italic;";
+        noRooms.textContent = "Nenhuma sala disponível";
+        chatRoomList.appendChild(noRooms);
+    }
+}
+
+/**
+ * Atualiza a contagem de mensagens não lidas e reordena a barra lateral.
+ * @param {Array} roomData - Lista de objetos de sala com a nova contagem.
+ */
+function updateUnreadCounts(roomData) {
+    renderSidebar(roomData);
+
+    // Remove a div de "mensagem não lida" da página de chat
+    const unreadSummary = document.querySelector('.unread-summary');
+    if (unreadSummary) {
+        unreadSummary.remove();
+    }
+}
+
+// Funções de interação
+function markMessagesAsRead() {
+    chatSocket.send(JSON.stringify({ type: 'mark_as_read' }));
+}
+
+function handleUserActivity(data) {
+    console.log('Atividade do usuário:', data);
+}
+
+function showError(message) {
+    console.error('Erro:', message);
+    alert('Erro: ' + message);
+}
+
+// Event listeners
+chatSubmit.addEventListener('click', function(){
+    const msg = chatInput.value.trim();
+    if(msg) {
+        chatSocket.send(JSON.stringify({ message: msg }));
+        chatInput.value = '';
+    }
+});
+
+chatInput.addEventListener('keyup', function(e){
+    if(e.key === 'Enter') {
+        chatSubmit.click();
+    }
+});
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+
+    // Focar no input de mensagem
+    chatInput.focus();
+});
+
+// Navegação por teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl+K para focar no input
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        chatInput.focus();
+    }
+
+    // Escape para limpar input
+    if (e.key === 'Escape') {
+        chatInput.value = '';
+        chatInput.blur();
+    }
+});
+
+// Funções do Modal
+function openMembersModal() {
+    membersModal.style.display = 'flex';
+}
+
+function closeMembersModal() {
+    membersModal.style.display = 'none';
+}
+
+if (membersButton) {
+    membersButton.addEventListener('click', openMembersModal);
+}
+
+if (closeButton) {
+    closeButton.addEventListener('click', closeMembersModal);
+}
+
+window.onclick = function(event) {
+    if (event.target == membersModal) {
+        closeMembersModal();
+    }
+}
+</script>
+</body>
+</html>
