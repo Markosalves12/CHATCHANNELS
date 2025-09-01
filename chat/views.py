@@ -5,11 +5,17 @@ from django.utils import timezone
 from .models import  Message, UserProfile
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Count, Q, Prefetch
 from .utils import get_user_chat_rooms_data
-from asgiref.sync import sync_to_async
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
+from .forms import CreateRoomForm
+from .models import ChatRoom
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 @login_required
 def chat_home(request):
@@ -239,16 +245,6 @@ def room_stats(request, room_name):
     return JsonResponse({'error': 'Requisição inválida'}, status=400)
 
 
-# chat/views.py (atualizar a view create_room)
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib import messages
-from .forms import CreateRoomForm
-from .models import ChatRoom
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-
 
 @login_required
 def create_room(request):
@@ -342,6 +338,94 @@ def create_room(request):
         'total_users': total_users,
         'available_users': User.objects.exclude(id=request.user.id).order_by('username')[:50]
     })
+
+
+@login_required
+def edit_room(request, room_name):
+    """Edita uma sala de chat."""
+    room = get_object_or_404(ChatRoom, name=room_name)
+
+    if room.created_by != request.user:
+        messages.error(request, 'Você não tem permissão para editar esta sala.')
+        return redirect('chat_room', room_name=room.name)
+
+    if request.method == 'POST':
+        form = CreateRoomForm(request.POST, instance=room, request=request)
+        if form.is_valid():
+
+            # Obter a lista atual de membros antes de salvar o formulário
+            current_members = set(room.members.all())
+
+            # Salva o formulário (altera nome e is_private)
+            form.save()
+
+            # Obter a nova lista de membros após o salvamento
+            updated_room = ChatRoom.objects.get(name=room.name)
+            new_members = set(updated_room.members.all())
+
+            # Identificar quem foi adicionado e quem foi removido
+            added_users = new_members - current_members
+            removed_users = current_members - new_members
+
+            try:
+                system_user = User.objects.get(username='System')
+            except User.DoesNotExist:
+                system_user = request.user
+
+            # Notificar os usuários sobre as mudanças
+            channel_layer = get_channel_layer()
+
+            # Notifica adições
+            for user in added_users:
+                notification_message = f"{request.user.username} adicionou {user.username} à sala."
+                Message.objects.create(room=updated_room, author=system_user, content=notification_message)
+
+                # Dispara a atualização para o usuário adicionado
+                user_group_name = f"user_{user.id}"
+                updated_room_data = get_user_chat_rooms_data(user)
+                async_to_sync(channel_layer.group_send)(
+                    user_group_name,
+                    {
+                        "type": "unread.count.update",
+                        "room_data": updated_room_data,
+                    }
+                )
+
+            # Notifica remoções
+            for user in removed_users:
+                # O criador não pode ser removido
+                if user != room.created_by:
+                    notification_message = f"{request.user.username} removeu {user.username} da sala."
+                    Message.objects.create(room=updated_room, author=system_user, content=notification_message)
+
+                    # Dispara a atualização para o usuário removido
+                    user_group_name = f"user_{user.id}"
+                    updated_room_data = get_user_chat_rooms_data(user)
+                    async_to_sync(channel_layer.group_send)(
+                        user_group_name,
+                        {
+                            "type": "unread.count.update",
+                            "room_data": updated_room_data,
+                        }
+                    )
+
+            # O próprio editor também precisa ter sua lista de salas atualizada
+            editor_group_name = f"user_{request.user.id}"
+            updated_room_data = get_user_chat_rooms_data(request.user)
+            async_to_sync(channel_layer.group_send)(
+                editor_group_name,
+                {
+                    "type": "unread.count.update",
+                    "room_data": updated_room_data,
+                }
+            )
+
+            messages.success(request, f'Sala "{updated_room.name}" atualizada com sucesso!')
+            return redirect('chat_room', room_name=updated_room.name)
+    else:
+        form = CreateRoomForm(instance=room, request=request)
+
+    return render(request, 'chat/edit_room.html', {'form': form, 'room': room})
 
 
 @login_required

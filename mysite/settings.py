@@ -65,6 +65,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'chat.context_processors.user_chat_rooms',
                 'chat.context_processors.room_context_processor',
+                'chat.context_processors.available_users',
             ],
         },
     },

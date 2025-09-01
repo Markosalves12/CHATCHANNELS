@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Sala - {{ room.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4a76a8;
+            box-shadow: 0 0 0 3px rgba(74, 118, 168, 0.1);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .room-type-info {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .participants-section {
+            margin-top: 30px;
+            border-top: 2px solid #f1f3f4;
+            padding-top: 25px;
+        }
+
+        .participants-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .users-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #f1f3f4;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .user-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-item.selected {
+            background-color: #e8f4fd;
+            border-left: 4px solid #4a76a8;
+        }
+
+        .user-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .user-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #4a76a8;
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background-color: #efe;
+            color: #363;
+            border: 1px solid #cfc;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .selected-count {
+            background: #4a76a8;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .participants-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✍️ Editar Sala: {{ room.name }}</h1>
+            <p>Atualize o nome da sala ou os participantes</p>
+        </div>
+
+        <div class="content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Nome da Sala:</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div style="color: #c33; font-size: 12px; margin-top: 5px;">
+                            {{ form.name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-check">
+                    {{ form.is_private }}
+                    <label for="{{ form.is_private.id_for_label }}" class="form-check-label">
+                        Sala Privada
+                    </label>
+                </div>
+
+                <div class="room-type-info" id="room-type-info">
+                    <span>🔒</span>
+                    <span id="room-type-text">
+                        {% if room.is_private %}
+                            Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.
+                        {% else %}
+                            Esta é uma sala pública. Todos os usuários podem acessá-la.
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="participants-section" id="participants-section">
+                    <div class="participants-header">
+                        <label>Participantes:</label>
+                        <div class="selected-count" id="selected-count">
+                            {{ form.initial.participants.count }} selecionados
+                        </div>
+                    </div>
+
+                    <div class="select-all-container">
+                        <input type="checkbox" id="select-all-users" onchange="toggleSelectAll(this)">
+                        <label for="select-all-users">Selecionar todos</label>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="user-search"
+                               placeholder="Buscar usuários..." onkeyup="filterUsers()">
+                        <span class="search-icon">🔍</span>
+                    </div>
+
+                    <div class="users-list" id="users-list">
+                        {% for user in form.participants.field.queryset %}
+                        <div class="user-item {% if user in form.initial.participants %}selected{% endif %}" id="user-item-{{ user.id }}">
+                            <div class="user-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ user.username }}</div>
+                                {% if user.email %}
+                                <div class="user-email">{{ user.email }}</div>
+                                {% endif %}
+                            </div>
+                            {% if user == room.created_by %}
+                            <span class="user-badge">Criador</span>
+                            {% endif %}
+                            <input type="checkbox" name="participants" value="{{ user.id }}"
+                                   id="user-{{ user.id }}" class="form-check-input user-checkbox"
+                                   {% if user in form.initial.participants %}checked{% endif %}
+                                   onchange="updateUserItem(this, {{ user.id }})">
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <p>Nenhum usuário disponível para adicionar</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        💾 Salvar Alterações
+                    </button>
+                    <a href="{% url 'chat_room' room_name=room.name %}" class="btn btn-secondary">
+                        ← Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Função para atualizar contador de selecionados
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = `${selectedCount} selecionado(s)`;
+        }
+
+        // Atualizar a aparência do item de usuário quando selecionado/deselecionado
+        function updateUserItem(checkbox, userId) {
+            const userItem = document.getElementById(`user-item-${userId}`);
+            if (checkbox.checked) {
+                userItem.classList.add('selected');
+            } else {
+                userItem.classList.remove('selected');
+            }
+            updateSelectedCount();
+            updateSelectAllCheckbox();
+        }
+
+        // Mostrar/ocultar seção de participantes baseado no tipo de sala
+        document.getElementById('{{ form.is_private.id_for_label }}').addEventListener('change', function() {
+            const participantsSection = document.getElementById('participants-section');
+            const roomTypeInfo = document.getElementById('room-type-text');
+
+            if (this.checked) {
+                participantsSection.style.display = 'block';
+                roomTypeInfo.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
+            } else {
+                participantsSection.style.display = 'none';
+                roomTypeInfo.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
+            }
+        });
+
+        // Filtro de usuários
+        function filterUsers() {
+            const searchTerm = document.getElementById('user-search').value.toLowerCase();
+            const userItems = document.querySelectorAll('.user-item');
+
+            userItems.forEach(item => {
+                const userName = item.querySelector('.user-name').textContent.toLowerCase();
+                const userEmail = item.querySelector('.user-email')?.textContent.toLowerCase() || '';
+
+                if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Selecionar/Deselecionar todos os usuários
+        function toggleSelectAll(checkbox) {
+            const userCheckboxes = document.querySelectorAll('.user-checkbox');
+            userCheckboxes.forEach(cb => {
+                // Não desmarca o criador da sala se estiver selecionando todos
+                if (!checkbox.checked && cb.parentElement.querySelector('.user-badge')) {
+                    return; // Mantém o criador selecionado
+                }
+                cb.checked = checkbox.checked;
+                const userId = cb.value;
+                updateUserItem(cb, userId);
+            });
+        }
+
+        // Atualizar o estado do checkbox "Selecionar todos"
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('select-all-users');
+            const userCheckboxes = document.querySelectorAll('.user-checkbox');
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+
+            selectAllCheckbox.checked = userCheckboxes.length === selectedCheckboxes.length;
+            selectAllCheckbox.indeterminate = selectedCheckboxes.length > 0 && selectedCheckboxes.length < userCheckboxes.length;
+        }
+
+        // Inicializar estado da seção de participantes e contador
+        document.addEventListener('DOMContentLoaded', function() {
+            const isPrivate = document.getElementById('{{ form.is_private.id_for_label }}').checked;
+            const participantsSection = document.getElementById('participants-section');
+            const roomTypeInfo = document.getElementById('room-type-text');
+
+            if (!isPrivate) {
+                participantsSection.style.display = 'none';
+                roomTypeInfo.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
+            } else {
+                roomTypeInfo.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
+            }
+
+            updateSelectedCount(); // Inicializa o contador ao carregar a página
+            updateSelectAllCheckbox(); // Atualiza o estado do checkbox "Selecionar todos"
+
+            // Destacar visualmente o criador da sala
+            const creatorBadges = document.querySelectorAll('.user-badge');
+            creatorBadges.forEach(badge => {
+                const checkbox = badge.parentElement.querySelector('.user-checkbox');
+                if (checkbox) {
+                    checkbox.disabled = true;
+                    checkbox.title = "O criador da sala não pode ser removido";
+                }
+            });
+        });
+
+        // Prevenir reenvio do formulário
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '⏳ Salvando...';
+        });
+    </script>
+</body>
+</html>

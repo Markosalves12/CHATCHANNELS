@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Chat Room</title>
 <style>
+/* Reset box-sizing para uma renderização mais previsível */
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -12,75 +17,200 @@ body {
     background-color: #f0f0f0;
 }
 
-/* Sidebar */
+/* Sidebar melhorada */
 #sidebar {
-    width: 250px;
-    background-color: #2f2f2f;
+    width: 280px;
+    background-color: #2c3e50;
     color: white;
-    padding: 10px;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    height: 100vh;
 }
-#sidebar h3 {
-    margin-top: 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #444;
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 2px solid #34495e;
+    background-color: #1a2530;
+    flex-shrink: 0;
 }
-.chat-room-item {
-    padding: 8px;
-    margin-bottom: 5px;
+
+.sidebar-header h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.3rem;
+    color: #ecf0f1;
+    text-align: center;
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#room-search {
+    width: 100%;
+    padding: 10px 35px 10px 12px;
+    border: 1px solid #34495e;
+    border-radius: 20px;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#room-search:focus {
+    border-color: #3498db;
+    background-color: #34495e;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.search-container::after {
+    content: '🔍';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #95a5a6;
+    font-size: 14px;
+}
+
+.create-room-btn {
+    background-color: #27ae60;
+    color: white;
+    padding: 10px 15px;
+    border: none;
     border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: block;
+    width: 100%;
+}
+
+.create-room-btn:hover {
+    background-color: #219a52;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+}
+
+.rooms-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rooms-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.rooms-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rooms-scrollable::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+
+.rooms-scrollable::-webkit-scrollbar-thumb {
+    background: #34495e;
+    border-radius: 3px;
+}
+
+.rooms-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #3d566e;
+}
+
+.chat-room-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #3f3f3f;
-    transition: background-color 0.2s;
+    background-color: #34495e;
+    transition: all 0.3s ease;
     text-decoration: none;
     color: white;
+    border: 1px solid transparent;
 }
+
 .chat-room-item:hover {
-    background-color: #505050;
-    text-decoration: none;
-    color: white;
+    background-color: #3d566e;
+    border-color: #3498db;
+    transform: translateX(3px);
 }
+
 .chat-room-item.active {
-    background-color: #4a76a8;
+    background-color: #3498db;
+    border-color: #2980b9;
+    box-shadow: 0 2px 12px rgba(52, 152, 219, 0.4);
 }
+
+.room-name {
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .unread-count {
-    background-color: #ff4444;
+    background-color: #e74c3c;
     color: white;
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     min-width: 20px;
     text-align: center;
-}
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-.create-room-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    text-decoration: none;
-}
-.create-room-btn:hover {
-    background-color: #388E3C;
-    text-decoration: none;
-    color: white;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
 }
 
-/* Chat area */
+.no-rooms {
+    text-align: center;
+    color: #95a5a6;
+    font-style: italic;
+    padding: 30px 15px;
+}
+
+.no-results {
+    text-align: center;
+    color: #95a5a6;
+    font-style: italic;
+    padding: 20px;
+    display: none;
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 2px solid #34495e;
+    background-color: #1a2530;
+    flex-shrink: 0;
+}
+
+.home-link {
+    display: block;
+    text-align: center;
+    background-color: #7f8c8d;
+    color: white;
+    padding: 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.home-link:hover {
+    background-color: #95a5a6;
+    transform: translateY(-1px);
+}
+
+/* Resto do CSS mantido igual */
 #chat-area {
     flex: 1;
     display: flex;
@@ -88,7 +218,6 @@ body {
     background-color: #ffffff;
 }
 
-/* Header */
 #chat-header {
     background-color: #4a4a4a;
     color: white;
@@ -98,26 +227,31 @@ body {
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
 #room-info {
     display: flex;
     align-items: center;
     gap: 15px;
 }
+
 #room-name {
     font-size: 18px;
     font-weight: bold;
 }
+
 .room-type-badge {
     background-color: #6c757d;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
 }
+
 #header-actions {
     display: flex;
     align-items: center;
     gap: 10px;
 }
+
 #mark-as-read-button {
     background-color: #4CAF50;
     color: white;
@@ -128,14 +262,17 @@ body {
     font-size: 14px;
     transition: background-color 0.2s;
 }
+
 #mark-as-read-button:hover {
     background-color: #388E3C;
 }
+
 #mark-as-read-button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
-.home-link {
+
+.home-link-chat {
     color: white;
     text-decoration: none;
     padding: 8px 12px;
@@ -143,11 +280,13 @@ body {
     border-radius: 4px;
     font-size: 14px;
 }
-.home-link:hover {
+
+.home-link-chat:hover {
     background-color: rgba(255,255,255,0.1);
     text-decoration: none;
     color: white;
 }
+
 .members-button {
     background-color: #4a76a8;
     color: white;
@@ -158,11 +297,11 @@ body {
     font-size: 14px;
     transition: background-color 0.2s;
 }
+
 .members-button:hover {
     background-color: #3a5a80;
 }
 
-/* Chat log */
 #chat-log-container {
     flex: 1;
     padding: 20px;
@@ -171,6 +310,7 @@ body {
     flex-direction: column;
     gap: 8px;
 }
+
 .message {
     max-width: 70%;
     padding: 12px;
@@ -180,18 +320,21 @@ body {
     position: relative;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
 .message.self {
     align-self: flex-end;
     background-color: #4a76a8;
     color: white;
     border-bottom-right-radius: 4px;
 }
+
 .message.other {
     align-self: flex-start;
     background-color: #f1f0f0;
     color: #333;
     border-bottom-left-radius: 4px;
 }
+
 .message.system {
     align-self: center;
     background-color: #e0e0e0;
@@ -202,6 +345,7 @@ body {
     padding: 8px 15px;
     max-width: 90%;
 }
+
 .message small {
     font-size: 11px;
     opacity: 0.8;
@@ -209,7 +353,6 @@ body {
     display: block;
 }
 
-/* Input area */
 #chat-input-container {
     display: flex;
     padding: 15px;
@@ -217,6 +360,7 @@ body {
     border-top: 1px solid #e0e0e0;
     gap: 10px;
 }
+
 #chat-message-input {
     flex: 1;
     padding: 12px;
@@ -226,10 +370,12 @@ body {
     outline: none;
     transition: border-color 0.2s;
 }
+
 #chat-message-input:focus {
     border-color: #4a76a8;
     box-shadow: 0 0 0 2px rgba(74, 118, 168, 0.2);
 }
+
 #chat-message-submit {
     background-color: #4a76a8;
     color: white;
@@ -241,11 +387,11 @@ body {
     font-weight: bold;
     transition: background-color 0.2s;
 }
+
 #chat-message-submit:hover {
     background-color: #3a5a80;
 }
 
-/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -258,6 +404,7 @@ body {
     justify-content: center;
     align-items: center;
 }
+
 .modal-content {
     background-color: #fefefe;
     padding: 25px;
@@ -269,11 +416,13 @@ body {
     max-height: 80vh;
     overflow-y: auto;
 }
+
 .modal-content h3 {
     margin-top: 0;
     margin-bottom: 20px;
     color: #333;
 }
+
 .close-button {
     position: absolute;
     right: 15px;
@@ -283,13 +432,16 @@ body {
     color: #aaa;
     cursor: pointer;
 }
+
 .close-button:hover {
     color: #555;
 }
+
 .members-list {
     list-style-type: none;
     padding: 0;
 }
+
 .members-list li {
     padding: 10px 0;
     border-bottom: 1px solid #eee;
@@ -297,9 +449,11 @@ body {
     justify-content: space-between;
     align-items: center;
 }
+
 .members-list li:last-child {
     border-bottom: none;
 }
+
 .online-status {
     width: 10px;
     height: 10px;
@@ -308,9 +462,11 @@ body {
     display: inline-block;
     margin-left: 8px;
 }
+
 .online-status.online {
     background-color: #4CAF50;
 }
+
 .tag {
     font-size: 12px;
     background-color: #ddd;
@@ -320,19 +476,139 @@ body {
     margin-left: 5px;
 }
 
-/* Scrollbar personalizada */
 #chat-log-container::-webkit-scrollbar {
     width: 6px;
 }
+
 #chat-log-container::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
+
 #chat-log-container::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
+
 #chat-log-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+    .participants-section {
+    margin-top: 30px;
+    border-top: 2px solid #f1f3f4;
+    padding-top: 25px;
+}
+
+.participants-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-box {
+    position: relative;
+    max-width: 300px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 25px;
+    font-size: 14px;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.users-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 2px solid #f1f3f4;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.user-item:hover {
+    background-color: #f8f9fa;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.user-email {
+    font-size: 12px;
+    color: #666;
+}
+
+.selected-count {
+    background: #4a76a8;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #666;
 }
 </style>
 </head>
@@ -340,27 +616,35 @@ body {
 
 <div id="sidebar">
     <div class="sidebar-header">
-        <h3>Salas de Chat</h3>
-        <a href="{% url 'create_room' %}" class="create-room-btn">Nova Sala</a>
+        <h3>💬 Salas de Chat</h3>
+        <div class="search-container">
+            <input type="text" id="room-search" placeholder="Buscar salas...">
+        </div>
+        <a href="{% url 'create_room' %}" class="create-room-btn">+ Nova Sala</a>
     </div>
 
-    <div id="chat-room-list">
-        {% for room in chat_rooms %}
-        <a href="{% url 'chat_room' room.name %}" class="chat-room-item {% if room.name == room_name %}active{% endif %}" data-room-name="{{ room.name }}">
-            <span>{{ room.name }}</span>
-            {% if room.unread_count > 0 %}
-            <span class="unread-count">{{ room.unread_count }}</span>
-            {% endif %}
-        </a>
-        {% empty %}
-        <p style="color: #ccc; font-style: italic;">Nenhuma sala disponível</p>
-        {% endfor %}
+    <div class="rooms-container">
+        <div class="rooms-scrollable" id="chat-room-list">
+            {% for room in chat_rooms %}
+            <a href="{% url 'chat_room' room.name %}" class="chat-room-item {% if room.name == room_name %}active{% endif %}" data-room-name="{{ room.name }}">
+                <span class="room-name">{{ room.name }}</span>
+                {% if room.unread_count > 0 %}
+                <span class="unread-count">{{ room.unread_count }}</span>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="no-rooms">
+                Nenhuma sala disponível
+            </div>
+            {% endfor %}
+            <div class="no-results" id="no-results">
+                Nenhuma sala encontrada
+            </div>
+        </div>
     </div>
 
-    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #444;">
-        <a href="{% url 'chat_home' %}" style="color: #ccc; text-decoration: none; display: block; padding: 8px; border-radius: 4px; background-color: #3f3f3f;">
-            🏠 Página Inicial
-        </a>
+    <div class="sidebar-footer">
+        <a href="{% url 'chat_home' %}" class="home-link">🏠 Página Inicial</a>
     </div>
 </div>
 
@@ -378,52 +662,57 @@ body {
             {% endif %}
         </div>
         <div id="header-actions">
-            <a href="{% url 'chat_home' %}" class="home-link">🏠 Início</a>
+            <a href="{% url 'chat_home' %}" class="home-link-chat">🏠 Início</a>
             <button id="mark-as-read-button" onclick="markMessagesAsRead()">
                 ✅ Marcar como lidas
             </button>
+            {% if room.created_by == request.user %}
+                <a href="{% url 'edit_room' room_name=room.name %}" class="home-link-chat">
+                    ✏️ Editar Sala
+                </a>
+            {% endif %}
         </div>
     </div>
 
     <div id="chat-log-container">
-{% for message in messages %}
-<div class="message {% if message.is_system_message %}system{% elif message.author == request.user %}self{% else %}other{% endif %}"
-     data-message-id="{{ message.id }}">
-    {% if not message.is_system_message %}
-        <strong>{{ message.author.username }}:</strong>
-    {% endif %}
-    {{ message.content }}<br>
-    <small>{{ message.timestamp|date:"H:i" }}</small>
+        {% for message in messages %}
+        <div class="message {% if message.is_system_message %}system{% elif message.author == request.user %}self{% else %}other{% endif %}"
+             data-message-id="{{ message.id }}">
+            {% if not message.is_system_message %}
+                <strong>{{ message.author.username }}:</strong>
+            {% endif %}
+            {{ message.content }}<br>
+            <small>{{ message.timestamp|date:"H:i" }}</small>
 
-    {% if not message.is_read_by_user and message.author != request.user %}
-    <div class="unread-badge" style="
-        background-color: #ff4444;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 10px;
-        font-size: 10px;
-        margin-top: 5px;
-        display: inline-block;
-    ">
-        Não lida
-    </div>
-    {% endif %}
-</div>
-{% endfor %}
+            {% if not message.is_read_by_user and message.author != request.user %}
+            <div class="unread-badge" style="
+                background-color: #ff4444;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 10px;
+                margin-top: 5px;
+                display: inline-block;
+            ">
+                Não lida
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
 
-{% if unread_count > 0 %}
-<div class="unread-summary" style="
-    text-align: center;
-    background: linear-gradient(135deg, #ff4444, #ff6b6b);
-    color: white;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 8px;
-    font-weight: bold;
-">
-    📌 {{ unread_count }} mensagem{{ unread_count|pluralize }} não lida{{ unread_count|pluralize }}
-</div>
-{% endif %}
+        {% if unread_count > 0 %}
+        <div class="unread-summary" style="
+            text-align: center;
+            background: linear-gradient(135deg, #ff4444, #ff6b6b);
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        ">
+            📌 {{ unread_count }} mensagem{{ unread_count|pluralize }} não lida{{ unread_count|pluralize }}
+        </div>
+        {% endif %}
     </div>
 
     <div id="chat-input-container">
@@ -436,18 +725,70 @@ body {
 <div id="members-modal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="closeMembersModal()">&times;</span>
-        <h3>Membros da Sala</h3>
-        <ul class="members-list">
-            {% for member in current_room_members.members %}
-            <li>
-                <span>{{ member.user }}</span>
-                {% if member.user == current_room_members.created_by %}
-                <span class="tag">{{ member.user }} (criador)</span>
+        <h3>Gerenciar Membros da Sala</h3>
+
+        <!-- Members List -->
+        <div class="members-section">
+            <h4>Membros Atuais ({{ current_room_members.total_members }})</h4>
+            <ul class="members-list">
+                {% for member in current_room_members.members %}
+                <li>
+                    <span>{{ member.user }}</span>
+                    {% if member.user == current_room_members.created_by %}
+                    <span class="tag">{{ member.user }} (criador)</span>
+                    {% endif %}
+                    <span class="online-status {% if member.is_online %}online{% endif %}"></span>
+                    {% if request.user == current_room_members.created_by and member.username != current_room_members.created_by %}
+                    <button class="remove-member-btn" onclick="removeMember('{{ member.username }}')"
+                            style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        Remover
+                    </button>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Add Members Section (Visible only to creator) -->
+        {% if request.user == current_room_members.created_by %}
+        <div class="participants-section" id="add-members-section">
+            <div class="participants-header">
+                <label>Adicionar Novos Membros:</label>
+                <div class="selected-count" id="selected-count">0 selecionados</div>
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="user-search" placeholder="Buscar usuários..." onkeyup="filterUsers()">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="users-list" id="users-list">
+                {% for user in available_users %}
+                {% if user not in current_room_members.members %}
+                <div class="user-item" data-username="{{ user.username }}">
+                    <div class="user-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ user.username }}</div>
+                        {% if user.email %}
+                        <div class="user-email">{{ user.email }}</div>
+                        {% endif %}
+                    </div>
+                    <input type="checkbox" name="new-participants" value="{{ user.id }}"
+                           id="user-{{ user.id }}" class="form-check-input user-checkbox"
+                           onchange="updateSelectedCount()">
+                </div>
                 {% endif %}
-                <span class="online-status {% if member.is_online %}online{% endif %}"></span>
-            </li>
-            {% endfor %}
-        </ul>
+                {% empty %}
+                <div class="empty-state">
+                    <p>Nenhum usuário disponível para adicionar</p>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="btn btn-primary" onclick="addMembers()" style="margin-top: 15px; width: 100%;">
+                Adicionar Selecionados
+            </button>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -458,6 +799,8 @@ const chatInput = document.getElementById('chat-message-input');
 const chatSubmit = document.getElementById('chat-message-submit');
 const chatRoomList = document.getElementById('chat-room-list');
 const markAsReadButton = document.getElementById('mark-as-read-button');
+const roomSearch = document.getElementById('room-search');
+const noResults = document.getElementById('no-results');
 
 // Modal
 const membersButton = document.getElementById('members-button');
@@ -491,6 +834,30 @@ chatSocket.onerror = function(error) {
     console.error('Erro WebSocket:', error);
 };
 
+// Função de busca de salas
+function filterRooms(searchTerm) {
+    const rooms = document.querySelectorAll('.chat-room-item');
+    let hasResults = false;
+
+    rooms.forEach(room => {
+        const roomName = room.getAttribute('data-room-name').toLowerCase();
+        if (roomName.includes(searchTerm.toLowerCase())) {
+            room.style.display = 'flex';
+            hasResults = true;
+        } else {
+            room.style.display = 'none';
+        }
+    });
+
+    // Mostrar mensagem de nenhum resultado
+    noResults.style.display = hasResults ? 'none' : 'block';
+}
+
+// Event listener para a barra de pesquisa
+roomSearch.addEventListener('input', function(e) {
+    filterRooms(e.target.value);
+});
+
 // Manipulador de mensagens WebSocket
 function handleWebSocketMessage(data) {
     switch(data.type) {
@@ -503,7 +870,6 @@ function handleWebSocketMessage(data) {
             break;
 
         case 'unread_count_update':
-            // Novo caso para atualizar a contagem e reordenar a sidebar
             updateUnreadCounts(data.room_data);
             break;
 
@@ -517,7 +883,6 @@ function handleWebSocketMessage(data) {
 function addMessageToLog(data) {
     const div = document.createElement('div');
 
-    // Adiciona a classe 'system' para mensagens do sistema
     if (data.is_system_message) {
         div.classList.add('message', 'system');
         div.innerHTML = `
@@ -548,61 +913,49 @@ function formatTimestamp(timestamp) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/**
- * Reconstroi a barra lateral com os novos dados de sala, atualizando a ordem e contagem.
- * @param {Array} roomData - Lista de objetos de sala com a nova contagem e ordem.
- */
+function updateUnreadCounts(roomData) {
+    renderSidebar(roomData);
+    const unreadSummary = document.querySelector('.unread-summary');
+    if (unreadSummary) {
+        unreadSummary.remove();
+    }
+}
+
 function renderSidebar(roomData) {
-    // Limpa a barra lateral atual
     chatRoomList.innerHTML = '';
 
-    // Adiciona os itens de sala com base nos novos dados
+    if (roomData.length === 0) {
+        const noRooms = document.createElement('div');
+        noRooms.className = 'no-rooms';
+        noRooms.textContent = 'Nenhuma sala disponível';
+        chatRoomList.appendChild(noRooms);
+        return;
+    }
+
     roomData.forEach(room => {
         const roomLink = document.createElement('a');
-        roomLink.href = `{% url 'chat_room' room.name %}`;
-        roomLink.classList.add('chat-room-item');
+        roomLink.href = `/chat/${room.name}/`;
+        roomLink.className = 'chat-room-item';
+        roomLink.setAttribute('data-room-name', room.name);
 
-        // Adiciona a classe 'active' se for a sala atual
         if (room.name === roomName) {
             roomLink.classList.add('active');
         }
 
         const roomNameSpan = document.createElement('span');
+        roomNameSpan.className = 'room-name';
         roomNameSpan.textContent = room.name;
         roomLink.appendChild(roomNameSpan);
 
-        // Adiciona o badge de não lidas se a contagem for maior que 0
         if (room.unread_count > 0) {
             const unreadBadge = document.createElement('span');
-            unreadBadge.classList.add('unread-count');
+            unreadBadge.className = 'unread-count';
             unreadBadge.textContent = room.unread_count;
             roomLink.appendChild(unreadBadge);
         }
 
         chatRoomList.appendChild(roomLink);
     });
-
-    // Se a lista estiver vazia, adiciona a mensagem padrão
-    if (roomData.length === 0) {
-        const noRooms = document.createElement('p');
-        noRooms.style = "color: #ccc; font-style: italic;";
-        noRooms.textContent = "Nenhuma sala disponível";
-        chatRoomList.appendChild(noRooms);
-    }
-}
-
-/**
- * Atualiza a contagem de mensagens não lidas e reordena a barra lateral.
- * @param {Array} roomData - Lista de objetos de sala com a nova contagem.
- */
-function updateUnreadCounts(roomData) {
-    renderSidebar(roomData);
-
-    // Remove a div de "mensagem não lida" da página de chat
-    const unreadSummary = document.querySelector('.unread-summary');
-    if (unreadSummary) {
-        unreadSummary.remove();
-    }
 }
 
 // Funções de interação
@@ -637,20 +990,16 @@ chatInput.addEventListener('keyup', function(e){
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     scrollToBottom();
-
-    // Focar no input de mensagem
     chatInput.focus();
 });
 
 // Navegação por teclado
 document.addEventListener('keydown', function(e) {
-    // Ctrl+K para focar no input
     if (e.ctrlKey && e.key === 'k') {
         e.preventDefault();
         chatInput.focus();
     }
 
-    // Escape para limpar input
     if (e.key === 'Escape') {
         chatInput.value = '';
         chatInput.blur();
