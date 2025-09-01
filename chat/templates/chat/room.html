@@ -747,48 +747,18 @@ body {
                 </li>
                 {% endfor %}
             </ul>
+            {% if request.user != current_room_members.created_by %}
+            <div style="margin-top: 16px; text-align: center;">
+                <form method="POST" action="{% url 'leave_room' room.name %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                        style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        Sair da Sala
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
-
-        <!-- Add Members Section (Visible only to creator) -->
-        {% if request.user == current_room_members.created_by %}
-        <div class="participants-section" id="add-members-section">
-            <div class="participants-header">
-                <label>Adicionar Novos Membros:</label>
-                <div class="selected-count" id="selected-count">0 selecionados</div>
-            </div>
-            <div class="search-box">
-                <input type="text" class="search-input" id="user-search" placeholder="Buscar usuários..." onkeyup="filterUsers()">
-                <span class="search-icon">🔍</span>
-            </div>
-            <div class="users-list" id="users-list">
-                {% for user in available_users %}
-                {% if user not in current_room_members.members %}
-                <div class="user-item" data-username="{{ user.username }}">
-                    <div class="user-avatar">
-                        {{ user.username|first|upper }}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ user.username }}</div>
-                        {% if user.email %}
-                        <div class="user-email">{{ user.email }}</div>
-                        {% endif %}
-                    </div>
-                    <input type="checkbox" name="new-participants" value="{{ user.id }}"
-                           id="user-{{ user.id }}" class="form-check-input user-checkbox"
-                           onchange="updateSelectedCount()">
-                </div>
-                {% endif %}
-                {% empty %}
-                <div class="empty-state">
-                    <p>Nenhum usuário disponível para adicionar</p>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="btn btn-primary" onclick="addMembers()" style="margin-top: 15px; width: 100%;">
-                Adicionar Selecionados
-            </button>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -873,11 +843,51 @@ function handleWebSocketMessage(data) {
             updateUnreadCounts(data.room_data);
             break;
 
+        case 'user_left':
+            handleUserLeft(data);
+            break;
+
         case 'error':
             showError(data.message);
             break;
     }
 }
+
+
+function handleUserLeft(data) {
+    // Adicionar mensagem de sistema ao chat log
+    const div = document.createElement('div');
+    div.classList.add('message', 'system');
+    div.innerHTML = `
+        ${data.username} saiu da sala.<br>
+        <small>${formatTimestamp(new Date().toISOString())}</small>
+    `;
+    chatLogContainer.appendChild(div);
+    scrollToBottom();
+
+    // Atualizar lista de membros online se necessário
+    updateOnlineUsersList(data.username, false);
+
+    // Se o usuário que saiu é o usuário atual, redirecionar
+    if (data.username === username) {
+        setTimeout(() => {
+            window.location.href = '/chat/'; // Redireciona para a página inicial do chat
+        }, 1000);
+    }
+}
+
+// Função auxiliar para atualizar a lista de usuários online
+function updateOnlineUsersList(username, isJoining) {
+    // Implemente conforme sua estrutura de lista de usuários online
+    const userList = document.getElementById('online-users-list');
+    if (userList) {
+        const userElement = userList.querySelector(`[data-username="${username}"]`);
+        if (userElement && !isJoining) {
+            userElement.remove();
+        }
+    }
+}
+
 
 // Funções de manipulação de mensagens
 function addMessageToLog(data) {

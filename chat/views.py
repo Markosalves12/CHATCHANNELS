@@ -657,29 +657,76 @@ def delete_room(request, room_name):
 
 @login_required
 def leave_room(request, room_name):
-    """Sai de uma sala privada"""
+    """Usuário sai de uma sala privada."""
     room = get_object_or_404(ChatRoom, name=room_name)
 
+    # Só faz sentido sair de salas privadas
     if not room.is_private:
-        return JsonResponse({
-            'success': False,
-            'message': 'Você não pode sair de uma sala pública'
-        })
+        messages.error(request, 'Você não pode sair de uma sala pública.')
+        return redirect('chat_room', room_name=room.name)
 
-    # Não permitir que o criador saia da própria sala
+    # Criador não pode sair sem transferir
     if room.created_by == request.user:
-        return JsonResponse({
-            'success': False,
-            'message': 'O criador não pode sair da sala. Transfira a propriedade primeiro.'
-        })
+        messages.error(request, 'O criador não pode sair da sala. Transfira a propriedade primeiro.')
+        return redirect('chat_room', room_name=room.name)
 
     # Remover usuário da sala
-    room.remove_member(request.user)
+    if request.user in room.members.all():
+        room.members.remove(request.user)
 
-    return JsonResponse({
-        'success': True,
-        'message': 'Você saiu da sala'
-    })
+        # Criar mensagem de sistema
+        try:
+            system_user = User.objects.get(username="System")
+        except User.DoesNotExist:
+            system_user = request.user
+
+        Message.objects.create(
+            room=room,
+            author=system_user,
+            content=f"{request.user.username} saiu da sala."
+        )
+
+        # Notificar os outros membros via WebSocket
+        channel_layer = get_channel_layer()
+
+        # Notificar a sala que o usuário saiu
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{room.name}",
+            {
+                "type": "user_left",  # Isso chama o método user_left no consumer
+                "username": request.user.username,
+            }
+        )
+
+        # Atualizar a sidebar de todos os usuários
+        for member in room.members.all():
+            user_group_name = f"user_{member.id}"
+            updated_room_data = get_user_chat_rooms_data(member)
+
+            async_to_sync(channel_layer.group_send)(
+                user_group_name,
+                {
+                    "type": "unread_count_update",
+                    "room_data": updated_room_data,
+                }
+            )
+
+        # Atualizar a sidebar do usuário que saiu também
+        user_group_name = f"user_{request.user.id}"
+        updated_room_data = get_user_chat_rooms_data(request.user)
+        async_to_sync(channel_layer.group_send)(
+            user_group_name,
+            {
+                "type": "unread_count_update",
+                "room_data": updated_room_data,
+            }
+        )
+
+        messages.success(request, f'Você saiu da sala "{room.name}".')
+        return redirect('chat_home')
+
+    messages.error(request, 'Você não faz parte desta sala.')
+    return redirect('chat_home')
 
 
 @csrf_protect
