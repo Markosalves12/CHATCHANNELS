@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Chat Room</title>
+<style>
+/* Reset box-sizing para uma renderização mais previsível */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+/* Sidebar melhorada */
+#sidebar {
+    width: 280px;
+    background-color: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 2px solid #34495e;
+    background-color: #1a2530;
+    flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.3rem;
+    color: #ecf0f1;
+    text-align: center;
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#room-search {
+    width: 100%;
+    padding: 10px 35px 10px 12px;
+    border: 1px solid #34495e;
+    border-radius: 20px;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#room-search:focus {
+    border-color: #3498db;
+    background-color: #34495e;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.search-container::after {
+    content: '🔍';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #95a5a6;
+    font-size: 14px;
+}
+
+.create-room-btn {
+    background-color: #27ae60;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: block;
+    width: 100%;
+}
+
+.create-room-btn:hover {
+    background-color: #219a52;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+}
+
+.rooms-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rooms-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.rooms-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rooms-scrollable::-webkit-scrollbar-track {
+    background: #2c3e50;
+}
+
+.rooms-scrollable::-webkit-scrollbar-thumb {
+    background: #34495e;
+    border-radius: 3px;
+}
+
+.rooms-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #3d566e;
+}
+
+.chat-room-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #34495e;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+    border: 1px solid transparent;
+}
+
+.chat-room-item:hover {
+    background-color: #3d566e;
+    border-color: #3498db;
+    transform: translateX(3px);
+}
+
+.chat-room-item.active {
+    background-color: #3498db;
+    border-color: #2980b9;
+    box-shadow: 0 2px 12px rgba(52, 152, 219, 0.4);
+}
+
+.room-name {
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unread-count {
+    background-color: #e74c3c;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+}
+
+.no-rooms {
+    text-align: center;
+    color: #95a5a6;
+    font-style: italic;
+    padding: 30px 15px;
+}
+
+.no-results {
+    text-align: center;
+    color: #95a5a6;
+    font-style: italic;
+    padding: 20px;
+    display: none;
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 2px solid #34495e;
+    background-color: #1a2530;
+    flex-shrink: 0;
+}
+
+.home-link {
+    display: block;
+    text-align: center;
+    background-color: #7f8c8d;
+    color: white;
+    padding: 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.home-link:hover {
+    background-color: #95a5a6;
+    transform: translateY(-1px);
+}
+
+/* Resto do CSS mantido igual */
+#chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+#chat-header {
+    background-color: #4a4a4a;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#room-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#room-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.room-type-badge {
+    background-color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+#header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#mark-as-read-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+#mark-as-read-button:hover {
+    background-color: #388E3C;
+}
+
+#mark-as-read-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.home-link-chat {
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.home-link-chat:hover {
+    background-color: rgba(255,255,255,0.1);
+    text-decoration: none;
+    color: white;
+}
+
+.members-button {
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.members-button:hover {
+    background-color: #3a5a80;
+}
+
+#chat-log-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    max-width: 70%;
+    padding: 12px;
+    margin: 4px 0;
+    border-radius: 12px;
+    word-wrap: break-word;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message.self {
+    align-self: flex-end;
+    background-color: #4a76a8;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.other {
+    align-self: flex-start;
+    background-color: #f1f0f0;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+.message.system {
+    align-self: center;
+    background-color: #e0e0e0;
+    color: #555;
+    text-align: center;
+    font-style: italic;
+    border-radius: 20px;
+    padding: 8px 15px;
+    max-width: 90%;
+}
+
+.message small {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 4px;
+    display: block;
+}
+
+#chat-input-container {
+    display: flex;
+    flex-direction: column; /* Novo: muda para coluna */
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    gap: 10px;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#chat-message-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 25px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#chat-message-input:focus {
+    border-color: #4a76a8;
+    box-shadow: 0 0 0 2px rgba(74, 118, 168, 0.2);
+}
+
+.chat-input-button {
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    padding: 12px; /* Padronizado */
+    border-radius: 50%; /* Circular */
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-input-button:hover {
+    background-color: #3a5a80;
+}
+
+.attachment-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #e9ecef;
+    margin-top: 10px;
+}
+
+.attachment-item {
+    position: relative;
+    max-width: 120px;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.attachment-item .remove-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.attachment-item img,
+.attachment-item video,
+.attachment-item audio {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.attachment-item .file-info {
+    font-size: 12px;
+    text-align: center;
+    word-break: break-all;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.attachment-item .file-icon {
+    font-size: 30px;
+    color: #6c757d;
+}
+
+/* Estilos para o log de chat */
+.attachment-in-message {
+    display: block;
+    margin-top: 10px;
+}
+
+.attachment-in-message img,
+.attachment-in-message video {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.attachment-in-message audio {
+    width: 100%;
+}
+
+.attachment-in-message a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s;
+}
+
+.message.self .attachment-in-message a {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.attachment-in-message a:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.close-button {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: #555;
+}
+
+.members-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.members-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.members-list li:last-child {
+    border-bottom: none;
+}
+
+.online-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.online-status.online {
+    background-color: #4CAF50;
+}
+
+.tag {
+    font-size: 12px;
+    background-color: #ddd;
+    color: #555;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+#chat-log-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-log-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#chat-log-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#chat-log-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+    .participants-section {
+    margin-top: 30px;
+    border-top: 2px solid #f1f3f4;
+    padding-top: 25px;
+}
+
+.participants-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-box {
+    position: relative;
+    max-width: 300px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 25px;
+    font-size: 14px;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.users-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 2px solid #f1f3f4;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.user-item:hover {
+    background-color: #f8f9fa;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.user-email {
+    font-size: 12px;
+    color: #666;
+}
+
+.selected-count {
+    background: #4a76a8;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h3>💬 Salas de Chat</h3>
+        <div class="search-container">
+            <input type="text" id="room-search" placeholder="Buscar salas...">
+        </div>
+        <a href="{% url 'create_room' %}" class="create-room-btn">+ Nova Sala</a>
+    </div>
+
+    <div class="rooms-container">
+        <div class="rooms-scrollable" id="chat-room-list">
+            {% for room in chat_rooms %}
+            <a href="{% url 'chat_room' room.name %}" class="chat-room-item {% if room.name == room_name %}active{% endif %}" data-room-name="{{ room.name }}">
+                <span class="room-name">{{ room.name }}</span>
+                {% if room.unread_count > 0 %}
+                <span class="unread-count">{{ room.unread_count }}</span>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="no-rooms">
+                Nenhuma sala disponível
+            </div>
+            {% endfor %}
+            <div class="no-results" id="no-results">
+                Nenhuma sala encontrada
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <a href="{% url 'chat_home' %}" class="home-link">🏠 Página Inicial</a>
+    </div>
+</div>
+
+<div id="chat-area">
+    <div id="chat-header">
+        <div id="room-info">
+            <span id="room-name">{{ room_name }}</span>
+            <span class="room-type-badge">
+                {% if room.is_private %}🔒 Privada{% else %}🌐 Pública{% endif %}
+            </span>
+            {% if current_room_members %}
+            <button id="members-button" class="members-button">
+                👥 {{ current_room_members.total_members }} Membro{{ current_room_members.total_members|pluralize }}
+            </button>
+            {% endif %}
+        </div>
+        <div id="header-actions">
+            <a href="{% url 'chat_home' %}" class="home-link-chat">🏠 Início</a>
+            <button id="mark-as-read-button" onclick="markMessagesAsRead()">
+                ✅ Marcar como lidas
+            </button>
+            {% if room.created_by == request.user %}
+                <a href="{% url 'edit_room' room_name=room.name %}" class="home-link-chat">
+                    ✏️ Editar Sala
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!--
+      ÁREA MODIFICADA: O loop de mensagens do Django foi removido.
+      O container agora começa vazio e será preenchido pelo JavaScript.
+    -->
+    <div id="chat-log-container">
+        <div class="message system">Carregando histórico de mensagens...</div>
+    </div>
+
+    <div id="chat-input-container">
+        <div id="attachment-preview-container" class="attachment-preview" style="display: none;"></div>
+        <div class="input-row">
+            <input id="attachment-input" type="file" multiple style="display: none;">
+            <button id="attach-button" class="chat-input-button">📎</button>
+            <button id="record-audio-button" class="chat-input-button">🎙️</button>
+            <input id="chat-message-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off">
+            <button id="chat-message-submit" class="chat-input-button">▶️</button>
+        </div>
+    </div>
+</div>
+
+{% if current_room_members %}
+<div id="members-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeMembersModal()">&times;</span>
+        <h3>Gerenciar Membros da Sala</h3>
+
+        <div class="members-section">
+            <h4>Membros Atuais ({{ current_room_members.total_members }})</h4>
+            <ul class="members-list">
+                {% for member in current_room_members.members %}
+                <li>
+                    <span>{{ member.user }}</span>
+                    {% if member.user == current_room_members.created_by %}
+                    <span class="tag">{{ member.user }} (criador)</span>
+                    {% endif %}
+                    <span class="online-status {% if member.is_online %}online{% endif %}"></span>
+                    {% if request.user == current_room_members.created_by and member.username != current_room_members.created_by %}
+                    <button class="remove-member-btn" onclick="removeMember('{{ member.username }}')"
+                            style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        Remover
+                    </button>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            <div style="margin-top: 16px; text-align: center; display: flex; justify-content: center; gap: 12px;">
+                {% if request.user != current_room_members.created_by %}
+                <form method="POST" action="{% url 'leave_room' room.name %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                        style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        Sair da Sala
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if request.user == current_room_members.created_by %}
+                <button type="button"
+                    onclick="openDeleteModal()"
+                    style="background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                    Excluir Sala
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="deleteModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+           background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;">
+    <div style="background: white; padding: 20px; border-radius: 8px; width: 300px; text-align: center;">
+        <h3 style="margin-bottom: 12px;">Tem certeza?</h3>
+        <p style="margin-bottom: 20px;">Essa ação vai excluir a sala <b>{{ room.name }}</b> para todos os usuários.</p>
+        <form method="POST" action="{% url 'delete_room' room.name %}" style="display: flex; justify-content: space-between;">
+            {% csrf_token %}
+            <button type="button"
+                onclick="closeDeleteModal()"
+                style="background: #7f8c8d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                Cancelar
+            </button>
+            <button type="submit"
+                style="background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                Confirmar
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+<script>
+// ==================================================================
+// INÍCIO DO SCRIPT COMPLETO E CORRIGIDO
+// ==================================================================
+const chatLogContainer = document.getElementById('chat-log-container');
+const chatInput = document.getElementById('chat-message-input');
+const chatSubmit = document.getElementById('chat-message-submit');
+const chatRoomList = document.getElementById('chat-room-list');
+const markAsReadButton = document.getElementById('mark-as-read-button');
+const roomSearch = document.getElementById('room-search');
+const noResults = document.getElementById('no-results');
+
+
+// Modal
+const membersButton = document.getElementById('members-button');
+const membersModal = document.getElementById('members-modal');
+const closeButton = document.querySelector('.close-button');
+
+// Anexos e Gravação
+const attachButton = document.getElementById('attach-button');
+const attachmentInput = document.getElementById('attachment-input');
+const attachmentPreviewContainer = document.getElementById('attachment-preview-container');
+const recordAudioButton = document.getElementById('record-audio-button');
+let attachedFiles = [];
+let mediaRecorder;
+let audioChunks = [];
+
+// Variáveis de contexto do Django
+const roomName = "{{ room_name }}";
+const username = "{{ request.user.username }}";
+const userId = parseInt("{{ request.user.id }}");
+const uploadUrl = "{% url 'upload_attachment' %}";
+
+// Inicializar WebSocket
+const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+);
+
+// --- NOVA FUNÇÃO: Buscar histórico de mensagens via API ---
+async function fetchMessageHistory() {
+    try {
+        // A URL deve corresponder à que você criou no urls.py do Django
+        const response = await fetch(`/api/chat/${roomName}/messages/`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const history = await response.json();
+
+        // Limpa a mensagem "Carregando..." do container
+        chatLogContainer.innerHTML = '';
+
+        if (history.length === 0) {
+            chatLogContainer.innerHTML = '<div class="message system">Nenhuma mensagem nesta sala ainda. Seja o primeiro a conversar!</div>';
+        } else {
+            // Renderiza cada mensagem do histórico
+            history.forEach(message => {
+                addMessageToLog(message);
+            });
+        }
+
+        // Rola para o final após carregar o histórico
+        scrollToBottom();
+
+    } catch (error) {
+        console.error("Erro ao carregar histórico de mensagens:", error);
+        chatLogContainer.innerHTML = '<div class="message system">Ocorreu um erro ao carregar o histórico. Por favor, recarregue a página.</div>';
+    }
+}
+
+// Eventos do WebSocket
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    handleWebSocketMessage(data);
+};
+
+chatSocket.onopen = function() {
+    console.log('Conexão WebSocket estabelecida');
+};
+
+chatSocket.onclose = function() {
+    console.log('Conexão WebSocket fechada');
+};
+
+chatSocket.onerror = function(error) {
+    console.error('Erro WebSocket:', error);
+};
+
+// Função de busca de salas
+function filterRooms(searchTerm) {
+    const rooms = document.querySelectorAll('.chat-room-item');
+    let hasResults = false;
+
+    rooms.forEach(room => {
+        const roomNameAttr = room.getAttribute('data-room-name').toLowerCase();
+        if (roomNameAttr.includes(searchTerm.toLowerCase())) {
+            room.style.display = 'flex';
+            hasResults = true;
+        } else {
+            room.style.display = 'none';
+        }
+    });
+    noResults.style.display = hasResults ? 'none' : 'block';
+}
+
+// Manipulador de mensagens WebSocket
+function handleWebSocketMessage(data) {
+    switch(data.type) {
+        case 'chat_message':
+            addMessageToLog(data);
+            break;
+        case 'user_activity':
+            handleUserActivity(data);
+            break;
+        case 'unread_count_update':
+            updateUnreadCounts(data.room_data);
+            break;
+        case 'user_left':
+            handleUserLeft(data);
+            break;
+        case 'room_deleted':
+            handleRoomDeleted(data);
+            break;
+        case 'error':
+            showError(data.message);
+            break;
+    }
+}
+
+function handleRoomDeleted(data) {
+    const div = document.createElement('div');
+    div.classList.add('message', 'system');
+    div.innerHTML = `A sala "${data.room_name}" foi excluída. Você será redirecionado.`;
+    chatLogContainer.appendChild(div);
+    scrollToBottom();
+
+    setTimeout(() => {
+        window.location.href = '/chat/';
+    }, 3000);
+}
+
+function handleUserLeft(data) {
+    const div = document.createElement('div');
+    div.classList.add('message', 'system');
+    div.innerHTML = `${data.username} saiu da sala.`;
+    chatLogContainer.appendChild(div);
+    scrollToBottom();
+
+    if (data.username === username) {
+        setTimeout(() => {
+            window.location.href = '/chat/';
+        }, 1500);
+    }
+}
+
+// Funções de manipulação de mensagens
+function addMessageToLog(data) {
+    const div = document.createElement('div');
+    // A API e o WebSocket devem retornar a mesma estrutura de dados
+    const attachmentsHtml = data.attachments && data.attachments.length > 0 ? createAttachmentsHtml(data.attachments) : '';
+
+    if (data.is_system_message) {
+        div.classList.add('message', 'system');
+        div.innerHTML = `
+            ${data.message || data.content}<br>
+            <small>${formatTimestamp(data.timestamp)}</small>
+        `;
+    } else {
+        div.classList.add('message');
+        div.classList.add(data.author === username ? 'self' : 'other');
+        div.innerHTML = `
+            <strong>${data.author}:</strong>
+            <p>${data.message || data.content}</p>
+            ${attachmentsHtml}
+            <small>${formatTimestamp(data.timestamp)}</small>
+        `;
+    }
+
+    div.setAttribute('data-message-id', data.message_id);
+    chatLogContainer.appendChild(div);
+    scrollToBottom();
+}
+
+function createAttachmentsHtml(attachments) {
+    let html = '';
+    attachments.forEach(att => {
+        // A URL do arquivo agora virá consistentemente como 'file_url'
+        const fileUrl = att.file_url;
+        const filename = att.original_filename;
+        const fileExt = filename.split('.').pop().toLowerCase();
+
+        html += `<div class="attachment-in-message">`;
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px;"></a>`;
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExt)) {
+            html += `<video src="${fileUrl}" controls style="max-width:300px;"></video>`;
+        } else if (['mp3', 'wav', 'ogg'].includes(fileExt)) {
+            html += `<audio src="${fileUrl}" controls></audio>`;
+        } else {
+            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
+                        <span class="file-icon">📄</span>
+                        <span>${filename}</span>
+                     </a>`;
+        }
+        html += `</div>`;
+    });
+    return `<div class="attachments">${html}</div>`;
+}
+
+// Funções de UI
+function scrollToBottom() {
+    chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateUnreadCounts(roomData) {
+    renderSidebar(roomData);
+}
+
+function renderSidebar(roomData) {
+    chatRoomList.innerHTML = '';
+    if (!roomData || roomData.length === 0) {
+        chatRoomList.innerHTML = '<div class="no-rooms">Nenhuma sala disponível</div>';
+        return;
+    }
+
+    roomData.forEach(room => {
+        const roomLink = document.createElement('a');
+        roomLink.href = `/chat/${room.name}/`;
+        roomLink.className = 'chat-room-item';
+        roomLink.setAttribute('data-room-name', room.name);
+        if (room.name === roomName) {
+            roomLink.classList.add('active');
+        }
+        roomLink.innerHTML = `<span class="room-name">${room.name}</span>`;
+        if (room.unread_count > 0) {
+            roomLink.innerHTML += `<span class="unread-count">${room.unread_count}</span>`;
+        }
+        chatRoomList.appendChild(roomLink);
+    });
+}
+
+// Funções de interação
+function markMessagesAsRead() {
+    chatSocket.send(JSON.stringify({ type: 'mark_as_read' }));
+    const unreadBadges = document.querySelectorAll('.unread-badge');
+    unreadBadges.forEach(badge => badge.remove());
+}
+
+function handleUserActivity(data) {
+    console.log('Atividade do usuário:', data);
+}
+
+function showError(message) {
+    console.error('Erro:', message);
+    alert('Erro: ' + message);
+}
+
+// Funções de anexo e gravação
+attachButton.addEventListener('click', () => attachmentInput.click());
+attachmentInput.addEventListener('change', (e) => {
+    attachedFiles = Array.from(e.target.files);
+    renderAttachedFiles();
+});
+
+
+function renderAttachedFiles() {
+    attachmentPreviewContainer.innerHTML = '';
+    attachmentPreviewContainer.style.display = attachedFiles.length > 0 ? 'flex' : 'none';
+
+    attachedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'attachment-item';
+        item.innerHTML = `<span class="remove-btn" data-index="${index}">&times;</span>`;
+
+        const fileType = file.type.split('/')[0];
+        let previewElement;
+        if (fileType === 'image') {
+            previewElement = document.createElement('img');
+            previewElement.src = URL.createObjectURL(file);
+        } else {
+            previewElement = document.createElement('span');
+            previewElement.className = 'file-icon';
+            previewElement.textContent = '📄';
+        }
+        item.appendChild(previewElement);
+        item.innerHTML += `<span class="file-info">${file.name}</span>`;
+        attachmentPreviewContainer.appendChild(item);
+    });
+}
+
+attachmentPreviewContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+        const index = parseInt(e.target.dataset.index, 10);
+        attachedFiles.splice(index, 1);
+        renderAttachedFiles();
+    }
+});
+
+recordAudioButton.addEventListener('click', async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordAudioButton.textContent = '🎙️';
+        recordAudioButton.style.backgroundColor = '';
+        return;
+    }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioFile = new File([audioBlob], `gravacao_${Date.now()}.webm`, { type: 'audio/webm' });
+            attachedFiles.push(audioFile);
+            renderAttachedFiles();
+        };
+        mediaRecorder.start();
+        recordAudioButton.textContent = '🔴';
+        recordAudioButton.style.backgroundColor = 'red';
+    } catch (err) {
+        console.error('Erro ao acessar o microfone:', err);
+        alert('Não foi possível acessar o microfone. Verifique as permissões.');
+    }
+});
+
+// Envio de mensagem
+async function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (msg === '' && attachedFiles.length === 0) return;
+
+    // Desabilita o botão de envio para evitar cliques duplos
+    chatSubmit.disabled = true;
+    chatSubmit.textContent = '...';
+
+    let attachmentIds = [];
+
+    // 1. Se houver arquivos, faça o upload primeiro
+    if (attachedFiles.length > 0) {
+        const formData = new FormData();
+        attachedFiles.forEach(file => {
+            formData.append('files', file); // O nome 'files' deve bater com o da view
+        });
+
+        try {
+            const response = await fetch( uploadUrl, {
+                method: 'POST',
+                headers: {
+                    // Django requer o token CSRF para requisições POST
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Falha no upload do anexo.');
+            }
+
+            const result = await response.json();
+            attachmentIds = result.attachment_ids;
+
+        } catch (error) {
+            console.error("Erro no upload:", error);
+            alert("Ocorreu um erro ao enviar os anexos. Tente novamente.");
+            // Reabilita o botão em caso de erro
+            chatSubmit.disabled = false;
+            chatSubmit.textContent = '▶️';
+            return; // Interrompe o envio da mensagem
+        }
+    }
+
+    // 2. Envie a mensagem via WebSocket com os IDs dos anexos
+    chatSocket.send(JSON.stringify({
+        message: msg,
+        attachment_ids: attachmentIds // Envia os IDs, não os arquivos
+    }));
+
+    // 3. Limpe a UI
+    chatInput.value = '';
+    attachedFiles = [];
+    renderAttachedFiles();
+    chatInput.focus();
+
+    // Reabilita o botão
+    chatSubmit.disabled = false;
+    chatSubmit.textContent = '▶️';
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result); // Envia o Data URL completo
+        reader.onerror = error => reject(error);
+    });
+}
+
+chatSubmit.addEventListener('click', sendMessage);
+chatInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// --- INICIALIZAÇÃO DA PÁGINA ---
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Busca o histórico de mensagens da API assim que a página carrega
+    fetchMessageHistory();
+
+    // 2. Foca no input de mensagem
+    chatInput.focus();
+});
+
+// Atalhos de teclado
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        chatInput.focus();
+    }
+    if (e.key === 'Escape') {
+        chatInput.blur();
+    }
+});
+
+// Funções do Modal de Membros
+function openMembersModal() {
+    if (membersModal) membersModal.style.display = 'flex';
+}
+
+function closeMembersModal() {
+    if (membersModal) membersModal.style.display = 'none';
+}
+
+function openDeleteModal() {
+    const modal = document.getElementById("deleteModal");
+    if(modal) modal.style.display = "flex";
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById("deleteModal");
+    if(modal) modal.style.display = "none";
+}
+
+if (membersButton) membersButton.addEventListener('click', openMembersModal);
+if (closeButton) closeButton.addEventListener('click', closeMembersModal);
+
+window.onclick = function(event) {
+    if (event.target == membersModal) {
+        closeMembersModal();
+    }
+    const deleteModal = document.getElementById("deleteModal");
+    if (event.target == deleteModal) {
+        closeDeleteModal();
+    }
+}
+
+// Eventos de "marcar como lido"
+chatInput.addEventListener('focus', markMessagesAsRead);
+
+// Adiciona o listener de forma segura, mesmo que não haja salas
+if (chatRoomList) {
+    chatRoomList.addEventListener('click', function(event) {
+        const roomItem = event.target.closest('.chat-room-item');
+        if (roomItem) {
+            event.preventDefault();
+            markMessagesAsRead();
+            setTimeout(() => {
+                window.location.href = roomItem.href;
+            }, 100);
+        }
+    });
+}
+// ==================================================================
+// FIM DO SCRIPT
+// ==================================================================
+</script>
+</body>
+</html>
+
+
+
+essa versao e quase final do html do chatreal time o unico problema agora é que ele nao faz o envio das mensgans com anexo e cai no erro, ocorreu um erro ao enviar um anexo vamos corrigir o log de erro no log do navegador 2/:1220 Erro no upload: SyntaxError: Unexpected token '<', "<!-- chat/"... is not valid JSON sendMessage @ 2/:1220
