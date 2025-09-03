@@ -19,13 +19,31 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 90vh; /* ocupa quase a tela toda */
         }
         h1 {
             color: #333;
             margin-bottom: 20px;
+            flex-shrink: 0;
         }
         .room-list {
-            margin-bottom: 30px;
+            flex: 1; /* ocupa espaço flexível */
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 5px; /* espaço p/ scroll */
+        }
+        /* Scrollbar estilizada */
+        .room-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .room-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+        .room-list::-webkit-scrollbar-thumb:hover {
+            background: #999;
         }
         .room-item {
             display: flex;
@@ -65,26 +83,12 @@
         }
         .create-form {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
             border-radius: 5px;
-            margin-top: 30px;
+            flex-shrink: 0;
+            text-align: center;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .form-check {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn {
+        .create-room-btn {
             background: #007bff;
             color: white;
             padding: 10px 20px;
@@ -92,8 +96,9 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            text-decoration: none;
         }
-        .btn:hover {
+        .create-room-btn:hover {
             background: #0056b3;
         }
         .empty-state {
@@ -109,11 +114,11 @@
 
         <div class="room-list">
             {% if rooms_with_unread %}
-                {% for item in rooms_with_unread %}
-                    <a href="{% url 'chat_room' item.room.name %}" class="room-item">
+                {% for item in chat_rooms %}
+                    <a href="{% url 'chat_room' item.name %}" class="room-item">
                         <div>
-                            <span class="room-name">{{ item.room.name }}</span>
-                            {% if item.room.is_private %}
+                            <span class="room-name">{{ item.name }}</span>
+                            {% if item.is_private %}
                                 <span class="private-badge">Privada</span>
                             {% endif %}
                         </div>
@@ -132,6 +137,5 @@
         <div class="create-form">
             <a href="{% url 'create_room' %}" class="create-room-btn">Nova Sala</a>
         </div>
-    </div>
 </body>
 </html>

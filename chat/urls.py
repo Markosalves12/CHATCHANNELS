@@ -56,4 +56,6 @@ urlpatterns = [
     path('api/available-users/', views.get_available_users, name='available_users'),
     path('<str:room_name>/mark-read/', views.mark_room_as_read, name='mark_room_read'),
     path('<str:room_name>/stats/', views.room_stats, name='room_stats'),
+    path('<str:room_name>/messages/', views.get_message_history, name='get_message_history'),
+    path('upload_attachment/', views.upload_attachment, name='upload_attachment'),
 ]

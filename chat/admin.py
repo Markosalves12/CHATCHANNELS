@@ -1,7 +1,8 @@
 # chat/admin.py
 from django.contrib import admin
-from .models import ChatRoom, RoomMembership, Message, UserProfile
-
+from .models import ChatRoom, RoomMembership, Message, UserProfile, Attachment
+from django.utils import timezone
+from django.contrib.auth.models import User
 
 @admin.register(ChatRoom)
 class ChatRoomAdmin(admin.ModelAdmin):
@@ -100,3 +101,8 @@ class UserProfileAdmin(admin.ModelAdmin):
             profile.save()
         self.message_user(request, "Última atividade atualizada para os perfis selecionados.")
     update_last_activity.short_description = "Atualizar última atividade"
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ('message', 'file', 'attachment_type', 'uploaded_at', 'original_filename',)
+    search_fields = ('message', 'file', 'attachment_type', 'uploaded_at', 'original_filename',)

@@ -2,7 +2,7 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
 from django.utils import timezone
-from .models import  Message, UserProfile
+from .models import  Message, UserProfile, Attachment
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
@@ -16,6 +16,8 @@ from .forms import CreateRoomForm
 from .models import ChatRoom
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.views.decorators.http import require_POST
+import os
 
 @login_required
 def chat_home(request):
@@ -61,94 +63,44 @@ def chat_home(request):
 
 @login_required
 def chat_room(request, room_name):
-    """Página da sala de chat específica com otimizações"""
-    # Obter ou criar a sala com select_related para created_by
-    room = get_object_or_404(
-        ChatRoom.objects.select_related('created_by'),
-        name=room_name
-    )
+    """
+    Renderiza a página de uma sala de chat.
+    A view foi simplificada para apenas verificar o acesso e renderizar o template base.
+    Todo o histórico de mensagens é carregado de forma assíncrona via API.
+    """
+    # 1. Obter a sala e verificar se ela existe
+    try:
+        # Usamos select_related para otimizar o acesso ao 'created_by' se necessário no template
+        room = ChatRoom.objects.select_related('created_by').get(name=room_name)
+    except ChatRoom.DoesNotExist:
+        messages.error(request, "A sala de chat que você tentou acessar não existe.")
+        return redirect('chat_home') # Redireciona para uma página inicial de chat
 
-    # Verificar acesso à sala
+    # 2. Verificar se o usuário tem permissão para acessar a sala
     if not room.can_user_access(request.user):
-        messages.error(request, "Você não tem acesso a esta sala.")
+        messages.error(request, "Você não tem acesso a esta sala privada.")
         return redirect('chat_home')
 
-    # Garantir que usuário seja membro em salas privadas
-    if room.is_private and not room.members.filter(id=request.user.id).exists():
-        room.add_member(request.user, added_by=room.created_by)
-        messages.info(request, f"Você foi adicionado à sala {room_name}")
-
-    # Pré-carregar relações para melhor performance
-    messages_prefetch = Prefetch(
-        'messages',
-        queryset=Message.objects.select_related('author')
-                 .prefetch_related('read_by')
-                 .order_by('-timestamp')[:100],
-        to_attr='recent_messages'
-    )
-
-    # Obter sala com mensagens recentes
-    room_with_messages = ChatRoom.objects.filter(id=room.id) \
-        .prefetch_related(messages_prefetch) \
-        .first()
-
-    # Processar mensagens com status de leitura
-    messages_with_status = []
-    unread_count = 0
-
-    for message in getattr(room_with_messages, 'recent_messages', []):
-        is_read_by_user = message.get_read_status_for_user(request.user)
-
-        # Contar mensagens não lidas (apenas de outros usuários)
-        if not is_read_by_user and message.author != request.user:
-            unread_count += 1
-
-        messages_with_status.append({
-            'id': message.id,
-            'content': message.content,
-            'author': message.author,
-            'timestamp': message.timestamp,
-            'is_read_by_user': is_read_by_user,
-            'read_count': message.read_by.count(),
-        })
-
-    # Reverter a ordem para mostrar as mais antigas primeiro
-    messages_with_status.reverse()
-
-    # Obter informações dos membros (apenas para salas privadas)
-    room_members = []
-    if room.is_private:
-        room_members = room.members.select_related('userprofile').all()
-
-    # Atualizar última atividade do usuário
+    # 3. (Opcional, mas recomendado) Atualizar a última atividade do usuário
+    # Isso é útil para saber quem está online.
     UserProfile.objects.update_or_create(
         user=request.user,
         defaults={'last_activity': timezone.now()}
     )
 
-    # Estatísticas da sala (opcional)
-    room_stats = {
-        'total_messages': Message.objects.filter(room=room).count(),
-        'active_today': Message.objects.filter(
-            room=room,
-            timestamp__date=timezone.now().date()
-        ).count(),
-        'members_count': room.members.count() + 1,  # +1 para o criador
-    }
-
+    # 4. Preparar o contexto mínimo para o template
+    # O template agora só precisa de informações básicas sobre a sala e o usuário.
+    # O JavaScript cuidará do resto.
     context = {
-        'room_name': room_name,
-        'room': room,
-        'messages': messages_with_status,
-        'unread_count': unread_count,
-        'room_members': room_members,
-        'room_stats': room_stats,
-        'is_room_creator': room.created_by == request.user,
-        'user_is_member': room.members.filter(id=request.user.id).exists(),
-        'now': timezone.now(),
+        'room_name': room.name,
+        'room': room,  # Passamos o objeto para acessar dados como room.is_private no template
+        'user_username': request.user.username, # Passa o nome de usuário de forma explícita
+        'user_id': request.user.id, # Passa o ID do usuário
     }
 
+    # 5. Renderizar o template "esqueleto"
     return render(request, 'chat/room.html', context)
+
 
 
 # Context Processor otimizado
@@ -644,14 +596,39 @@ def user_activity(request):
 
 @login_required
 def delete_room(request, room_name):
-    """Exclui uma sala de chat"""
+    """Deleta uma sala e redireciona todos os usuários para a home do chat."""
     room = get_object_or_404(ChatRoom, name=room_name)
 
-    # Apenas o criador pode excluir a sala
+    # Só o criador pode excluir
     if room.created_by != request.user:
-        return HttpResponseForbidden("Apenas o criador pode excluir a sala")
+        messages.error(request, 'Apenas o criador pode excluir esta sala.')
+        return redirect('chat_room', room_name=room.name)
+
+    channel_layer = get_channel_layer()
+
+    # Notificar todos os usuários da sala que ela foi excluída
+    async_to_sync(channel_layer.group_send)(
+        f"chat_{room.name}",
+        {
+            "type": "room_deleted",  # vai chamar room_deleted no consumer
+            "room_name": room.name,
+        }
+    )
+
+    # Atualizar a sidebar de todos os membros
+    for member in room.members.all():
+        user_group_name = f"user_{member.id}"
+        updated_room_data = get_user_chat_rooms_data(member)
+        async_to_sync(channel_layer.group_send)(
+            user_group_name,
+            {
+                "type": "unread_count_update",
+                "room_data": updated_room_data,
+            }
+        )
 
     room.delete()
+    messages.success(request, f'A sala "{room.name}" foi excluída.')
     return redirect('chat_home')
 
 
@@ -800,3 +777,127 @@ def register_view(request):
                 messages.error(request, f'Erro ao criar conta: {str(e)}')
 
     return render(request, 'chat/register.html')
+
+
+def get_message_history(request, room_name):
+    """
+    View de API para retornar o histórico de mensagens de uma sala em JSON.
+    """
+    try:
+        room = ChatRoom.objects.get(name=room_name)
+        messages = Message.objects.filter(room=room).order_by('timestamp').select_related('author')
+
+        history = []
+        for msg in messages:
+            attachments_data = []
+            # Supondo que você tenha um related_name 'attachments' no seu modelo Message
+            for att in msg.attachments.all():
+                attachments_data.append({
+                    'file': att.file.url,
+                    'original_filename': att.original_filename,
+                })
+
+            history.append({
+                'message_id': msg.id,
+                'author': msg.author.username,
+                'message': msg.content,
+                'timestamp': msg.timestamp.isoformat(),
+                'is_system_message': msg.is_system_message,
+                'attachments': attachments_data,
+            })
+
+        return JsonResponse(history, safe=False)
+
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({'error': 'Sala não encontrada'}, status=404)
+
+
+@login_required
+def get_message_history(request, room_name):
+    """
+    View de API para retornar o histórico de mensagens de uma sala em JSON,
+    baseada na lógica da view original e otimizada para serialização.
+    """
+    # 1. Obter a sala e verificar o acesso do usuário
+    try:
+        room = ChatRoom.objects.get(name=room_name)
+        if not room.can_user_access(request.user):
+            return JsonResponse({'error': 'Acesso negado'}, status=403)
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({'error': 'Sala não encontrada'}, status=404)
+
+    # 2. Buscar as últimas 100 mensagens com autores pré-carregados
+    messages_query = Message.objects.filter(room=room).select_related('author').order_by('-timestamp').distinct()[:100]
+
+    # Inverter a ordem para do mais antigo para o mais novo
+    messages = list(messages_query)[::-1]
+
+    # 3. Otimização: Buscar todos os anexos de uma vez
+    message_ids = [msg.id for msg in messages]
+    attachments_by_message_id = {}
+
+    # Usamos prefetch_related para buscar todos os anexos de todas as mensagens em uma única query
+    attachments_query = Attachment.objects.filter(message_id__in=message_ids)
+    for attachment in attachments_query:
+        if attachment.message_id not in attachments_by_message_id:
+            attachments_by_message_id[attachment.message_id] = []
+
+        # Estrutura do anexo para o JSON
+        attachments_by_message_id[attachment.message_id].append({
+            'file_url': attachment.file.url,
+            'original_filename': attachment.original_filename,
+            'attachment_type': attachment.attachment_type,
+        })
+
+    # 4. Montar a lista final de mensagens para o JSON
+    history = []
+    for msg in messages:
+        # Usamos o dicionário de anexos pré-buscados
+        message_attachments = attachments_by_message_id.get(msg.id, [])
+
+        history.append({
+            'message_id': msg.id,
+            'author': msg.author.username,
+            'content': msg.content,
+            'timestamp': msg.timestamp.isoformat(),
+            'is_system_message': False,  # Seu modelo Message não parece ter esse campo, então definimos como False.
+            'attachments': message_attachments,
+        })
+
+    return JsonResponse(history, safe=False)
+
+
+@require_POST  # Restricts to POST only for security
+def upload_attachment(request):
+    attachment_ids = []
+    try:
+        files = request.FILES.getlist('files')  # Matches the FormData key 'files'
+        if not files:
+            return JsonResponse({'error': 'Nenhum arquivo enviado'}, status=400)
+
+        for file in files:
+            # Determine attachment type based on content_type
+            content_type = file.content_type.lower()
+            attachment_type = 'other'
+            if 'image' in content_type:
+                attachment_type = 'image'
+            elif 'video' in content_type:
+                attachment_type = 'video'
+            elif 'audio' in content_type:
+                attachment_type = 'audio'
+            elif 'application/pdf' in content_type:
+                attachment_type = 'pdf'
+
+            # Create the attachment (message=None initially)
+            attachment = Attachment.objects.create(
+                file=file,
+                original_filename=file.name,
+                attachment_type=attachment_type,
+                # Add other fields if needed, e.g., uploaded_by=request.user
+            )
+            attachment_ids.append(attachment.id)
+
+        return JsonResponse({'attachment_ids': attachment_ids})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

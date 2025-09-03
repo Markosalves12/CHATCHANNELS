@@ -874,6 +874,9 @@ body {
 </div>
 {% endif %}
 <script>
+// ==================================================================
+// INÍCIO DO SCRIPT COMPLETO E CORRIGIDO
+// ==================================================================
 const chatLogContainer = document.getElementById('chat-log-container');
 const chatInput = document.getElementById('chat-message-input');
 const chatSubmit = document.getElementById('chat-message-submit');
@@ -881,6 +884,7 @@ const chatRoomList = document.getElementById('chat-room-list');
 const markAsReadButton = document.getElementById('mark-as-read-button');
 const roomSearch = document.getElementById('room-search');
 const noResults = document.getElementById('no-results');
+
 
 // Modal
 const membersButton = document.getElementById('members-button');
@@ -900,36 +904,45 @@ let audioChunks = [];
 const roomName = "{{ room_name }}";
 const username = "{{ request.user.username }}";
 const userId = parseInt("{{ request.user.id }}");
+const uploadUrl = "{% url 'upload_attachment' %}";
 
+// Inicializar WebSocket
 const chatSocket = new WebSocket(
     'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
 );
 
-// Buscar histórico de mensagens
+// --- NOVA FUNÇÃO: Buscar histórico de mensagens via API ---
 async function fetchMessageHistory() {
     try {
-        const response = await fetch(`/chat/${roomName}/messages/`);
+        // A URL deve corresponder à que você criou no urls.py do Django
+        const response = await fetch(`/api/chat/${roomName}/messages/`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const history = await response.json();
 
+        // Limpa a mensagem "Carregando..." do container
         chatLogContainer.innerHTML = '';
+
         if (history.length === 0) {
             chatLogContainer.innerHTML = '<div class="message system">Nenhuma mensagem nesta sala ainda. Seja o primeiro a conversar!</div>';
         } else {
+            // Renderiza cada mensagem do histórico
             history.forEach(message => {
                 addMessageToLog(message);
             });
         }
+
+        // Rola para o final após carregar o histórico
         scrollToBottom();
+
     } catch (error) {
         console.error("Erro ao carregar histórico de mensagens:", error);
         chatLogContainer.innerHTML = '<div class="message system">Ocorreu um erro ao carregar o histórico. Por favor, recarregue a página.</div>';
     }
 }
 
-// WebSocket Events
+// Eventos do WebSocket
 chatSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
     handleWebSocketMessage(data);
@@ -964,10 +977,6 @@ function filterRooms(searchTerm) {
     noResults.style.display = hasResults ? 'none' : 'block';
 }
 
-roomSearch.addEventListener('input', function(e) {
-    filterRooms(e.target.value);
-});
-
 // Manipulador de mensagens WebSocket
 function handleWebSocketMessage(data) {
     switch(data.type) {
@@ -995,42 +1004,39 @@ function handleWebSocketMessage(data) {
 function handleRoomDeleted(data) {
     const div = document.createElement('div');
     div.classList.add('message', 'system');
-    div.innerHTML = `A sala "${data.room_name}" foi excluída. Você será redirecionado.<br><small>${formatTimestamp(new Date().toISOString())}</small>`;
+    div.innerHTML = `A sala "${data.room_name}" foi excluída. Você será redirecionado.`;
     chatLogContainer.appendChild(div);
     scrollToBottom();
+
     setTimeout(() => {
         window.location.href = '/chat/';
-    }, 1000);
+    }, 3000);
 }
 
 function handleUserLeft(data) {
     const div = document.createElement('div');
     div.classList.add('message', 'system');
-    div.innerHTML = `${data.username} saiu da sala.<br><small>${formatTimestamp(new Date().toISOString())}</small>`;
+    div.innerHTML = `${data.username} saiu da sala.`;
     chatLogContainer.appendChild(div);
     scrollToBottom();
+
     if (data.username === username) {
         setTimeout(() => {
             window.location.href = '/chat/';
-        }, 1000);
+        }, 1500);
     }
 }
 
 // Funções de manipulação de mensagens
 function addMessageToLog(data) {
-    console.log('addMessageToLog data:', data);
-    if (document.querySelector(`[data-message-id="${data.message_id}"]`)) {
-        return;
-    }
-
     const div = document.createElement('div');
+    // A API e o WebSocket devem retornar a mesma estrutura de dados
     const attachmentsHtml = data.attachments && data.attachments.length > 0 ? createAttachmentsHtml(data.attachments) : '';
-    const messageContent = data.content || data.message || '';
 
     if (data.is_system_message) {
         div.classList.add('message', 'system');
         div.innerHTML = `
-            ${messageContent}<br>
+            ${data.message || data.content}<br>
             <small>${formatTimestamp(data.timestamp)}</small>
         `;
     } else {
@@ -1038,9 +1044,9 @@ function addMessageToLog(data) {
         div.classList.add(data.author === username ? 'self' : 'other');
         div.innerHTML = `
             <strong>${data.author}:</strong>
-            <p>${messageContent}</p>
+            <p>${data.message || data.content}</p>
             ${attachmentsHtml}
-            <small tdue="true">${formatTimestamp(data.timestamp)}</small>
+            <small>${formatTimestamp(data.timestamp)}</small>
         `;
     }
 
@@ -1052,22 +1058,18 @@ function addMessageToLog(data) {
 function createAttachmentsHtml(attachments) {
     let html = '';
     attachments.forEach(att => {
+        // A URL do arquivo agora virá consistentemente como 'file_url'
         const fileUrl = att.file_url;
         const filename = att.original_filename;
-        const attachmentType = att.attachment_type.toLowerCase();
+        const fileExt = filename.split('.').pop().toLowerCase();
 
         html += `<div class="attachment-in-message">`;
-        if (attachmentType === 'image') {
-            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></a>`;
-        } else if (attachmentType === 'video') {
-            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
-        } else if (attachmentType === 'audio') {
-            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
-        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px;"></a>`;
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExt)) {
+            html += `<video src="${fileUrl}" controls style="max-width:300px;"></video>`;
+        } else if (['mp3', 'wav', 'ogg'].includes(fileExt)) {
+            html += `<audio src="${fileUrl}" controls></audio>`;
         } else {
             html += `<a href="${fileUrl}" target="_blank" download="${filename}">
                         <span class="file-icon">📄</span>
@@ -1119,7 +1121,7 @@ function renderSidebar(roomData) {
 // Funções de interação
 function markMessagesAsRead() {
     chatSocket.send(JSON.stringify({ type: 'mark_as_read' }));
-    const unreadBadges = document.querySelectorAll('.unread-count');
+    const unreadBadges = document.querySelectorAll('.unread-badge');
     unreadBadges.forEach(badge => badge.remove());
 }
 
@@ -1134,14 +1136,11 @@ function showError(message) {
 
 // Funções de anexo e gravação
 attachButton.addEventListener('click', () => attachmentInput.click());
-
 attachmentInput.addEventListener('change', (e) => {
-    attachedFiles = Array.from(e.target.files).filter(file => file.size <= 5 * 1024 * 1024);
-    if (e.target.files.length !== attachedFiles.length) {
-        alert('Alguns arquivos foram ignorados por excederem o limite de 5MB.');
-    }
+    attachedFiles = Array.from(e.target.files);
     renderAttachedFiles();
 });
+
 
 function renderAttachedFiles() {
     attachmentPreviewContainer.innerHTML = '';
@@ -1150,52 +1149,31 @@ function renderAttachedFiles() {
     attachedFiles.forEach((file, index) => {
         const item = document.createElement('div');
         item.className = 'attachment-item';
-        item.setAttribute('data-index', index);
-
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'remove-btn';
-        removeBtn.textContent = 'x';
-        removeBtn.addEventListener('click', () => {
-            removeAttachedFile(index);
-        });
-
-        const fileInfo = document.createElement('span');
-        fileInfo.className = 'file-info';
-        fileInfo.textContent = file.name;
+        item.innerHTML = `<span class="remove-btn" data-index="${index}">&times;</span>`;
 
         const fileType = file.type.split('/')[0];
         let previewElement;
         if (fileType === 'image') {
             previewElement = document.createElement('img');
             previewElement.src = URL.createObjectURL(file);
-            previewElement.style.maxWidth = '100px';
-            previewElement.style.maxHeight = '100px';
-        } else if (fileType === 'video') {
-            previewElement = document.createElement('video');
-            previewElement.src = URL.createObjectURL(file);
-            previewElement.controls = true;
-            previewElement.style.maxWidth = '100px';
-        } else if (fileType === 'audio') {
-            previewElement = document.createElement('audio');
-            previewElement.src = URL.createObjectURL(file);
-            previewElement.controls = true;
         } else {
             previewElement = document.createElement('span');
             previewElement.className = 'file-icon';
             previewElement.textContent = '📄';
         }
-
-        item.appendChild(removeBtn);
         item.appendChild(previewElement);
-        item.appendChild(fileInfo);
+        item.innerHTML += `<span class="file-info">${file.name}</span>`;
         attachmentPreviewContainer.appendChild(item);
     });
 }
 
-function removeAttachedFile(index) {
-    attachedFiles.splice(index, 1);
-    renderAttachedFiles();
-}
+attachmentPreviewContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+        const index = parseInt(e.target.dataset.index, 10);
+        attachedFiles.splice(index, 1);
+        renderAttachedFiles();
+    }
+});
 
 recordAudioButton.addEventListener('click', async () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -1212,12 +1190,8 @@ recordAudioButton.addEventListener('click', async () => {
         mediaRecorder.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const audioFile = new File([audioBlob], `gravacao_${Date.now()}.webm`, { type: 'audio/webm' });
-            if (audioFile.size <= 5 * 1024 * 1024) {
-                attachedFiles.push(audioFile);
-                renderAttachedFiles();
-            } else {
-                alert('Gravação de áudio excede o limite de 5MB.');
-            }
+            attachedFiles.push(audioFile);
+            renderAttachedFiles();
         };
         mediaRecorder.start();
         recordAudioButton.textContent = '🔴';
@@ -1233,37 +1207,59 @@ async function sendMessage() {
     const msg = chatInput.value.trim();
     if (msg === '' && attachedFiles.length === 0) return;
 
+    // Desabilita o botão de envio para evitar cliques duplos
     chatSubmit.disabled = true;
     chatSubmit.textContent = '...';
 
-    let attachmentsToSend = [];
-    try {
-        for (const file of attachedFiles) {
-            const fileData = await fileToBase64(file);
-            attachmentsToSend.push({
-                filename: file.name,
-                data: fileData
+    let attachmentIds = [];
+
+    // 1. Se houver arquivos, faça o upload primeiro
+    if (attachedFiles.length > 0) {
+        const formData = new FormData();
+        attachedFiles.forEach(file => {
+            formData.append('files', file); // O nome 'files' deve bater com o da view
+        });
+
+        try {
+            const response = await fetch( uploadUrl, {
+                method: 'POST',
+                headers: {
+                    // Django requer o token CSRF para requisições POST
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
             });
+
+            if (!response.ok) {
+                throw new Error('Falha no upload do anexo.');
+            }
+
+            const result = await response.json();
+            attachmentIds = result.attachment_ids;
+
+        } catch (error) {
+            console.error("Erro no upload:", error);
+            alert("Ocorreu um erro ao enviar os anexos. Tente novamente.");
+            // Reabilita o botão em caso de erro
+            chatSubmit.disabled = false;
+            chatSubmit.textContent = '▶️';
+            return; // Interrompe o envio da mensagem
         }
-    } catch (error) {
-        console.error('Erro ao converter arquivos para base64:', error);
-        alert('Erro ao processar anexos. Tente novamente.');
-        chatSubmit.disabled = false;
-        chatSubmit.textContent = '▶️';
-        return;
     }
 
+    // 2. Envie a mensagem via WebSocket com os IDs dos anexos
     chatSocket.send(JSON.stringify({
-        type: 'chat_message',
         message: msg,
-        attachments: attachmentsToSend
+        attachment_ids: attachmentIds // Envia os IDs, não os arquivos
     }));
 
+    // 3. Limpe a UI
     chatInput.value = '';
     attachedFiles = [];
     renderAttachedFiles();
     chatInput.focus();
 
+    // Reabilita o botão
     chatSubmit.disabled = false;
     chatSubmit.textContent = '▶️';
 }
@@ -1272,7 +1268,7 @@ function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onload = () => resolve(reader.result); // Envia o Data URL completo
         reader.onerror = error => reject(error);
     });
 }
@@ -1284,36 +1280,27 @@ chatInput.addEventListener('keyup', (e) => {
     }
 });
 
-// Inicialização
+// --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Busca o histórico de mensagens da API assim que a página carrega
     fetchMessageHistory();
-    chatInput.focus();
 
-    chatRoomList.addEventListener('click', function(event) {
-        const roomItem = event.target.closest('.chat-room-item');
-        if (roomItem) {
-            event.preventDefault();
-            markMessagesAsRead();
-            setTimeout(() => {
-                window.location.href = roomItem.href;
-            }, 100);
-        }
-    });
+    // 2. Foca no input de mensagem
+    chatInput.focus();
 });
 
-// Navegação por teclado
+// Atalhos de teclado
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'k') {
         e.preventDefault();
         chatInput.focus();
     }
     if (e.key === 'Escape') {
-        chatInput.value = '';
         chatInput.blur();
     }
 });
 
-// Funções do Modal
+// Funções do Modal de Membros
 function openMembersModal() {
     if (membersModal) membersModal.style.display = 'flex';
 }
@@ -1324,12 +1311,12 @@ function closeMembersModal() {
 
 function openDeleteModal() {
     const modal = document.getElementById("deleteModal");
-    if (modal) modal.style.display = "flex";
+    if(modal) modal.style.display = "flex";
 }
 
 function closeDeleteModal() {
     const modal = document.getElementById("deleteModal");
-    if (modal) modal.style.display = "none";
+    if(modal) modal.style.display = "none";
 }
 
 if (membersButton) membersButton.addEventListener('click', openMembersModal);
@@ -1345,7 +1332,29 @@ window.onclick = function(event) {
     }
 }
 
+// Eventos de "marcar como lido"
 chatInput.addEventListener('focus', markMessagesAsRead);
+
+// Adiciona o listener de forma segura, mesmo que não haja salas
+if (chatRoomList) {
+    chatRoomList.addEventListener('click', function(event) {
+        const roomItem = event.target.closest('.chat-room-item');
+        if (roomItem) {
+            event.preventDefault();
+            markMessagesAsRead();
+            setTimeout(() => {
+                window.location.href = roomItem.href;
+            }, 100);
+        }
+    });
+}
+// ==================================================================
+// FIM DO SCRIPT
+// ==================================================================
 </script>
 </body>
 </html>
+
+
+
+essa versao e quase final do html do chatreal time o unico problema agora é que ele nao faz o envio das mensgans com anexo e cai no erro, ocorreu um erro ao enviar um anexo vamos corrigir o log de erro no log do navegador 2/:1220 Erro no upload: SyntaxError: Unexpected token '<', "<!-- chat/"... is not valid JSON sendMessage @ 2/:1220

@@ -1,33 +1,3 @@
-# from django.db.models import Q
-# from .models import ChatRoom, Message
-#
-# def get_user_chat_rooms_data(user):
-#     """
-#     Obtém a lista de salas do usuário com a contagem de mensagens não lidas.
-#     Esta função é agnóstica ao contexto (não depende do objeto 'request').
-#     """
-#     if not user.is_authenticated:
-#         return []
-#
-#     rooms = ChatRoom.objects.filter(
-#         Q(members=user) | Q(created_by=user)
-#     ).distinct()
-#
-#     room_data = []
-#     for room in rooms:
-#         unread_count = Message.objects.filter(
-#             room=room
-#         ).exclude(author=user).exclude(read_by=user).count()
-#
-#         room_data.append({
-#             'name': room.name,
-#             'is_private': room.is_private,
-#             'unread_count': unread_count,
-#         })
-#
-#     return room_data
-
-
 from django.db.models import Q
 from .models import ChatRoom, Message
 from django.shortcuts import get_object_or_404
