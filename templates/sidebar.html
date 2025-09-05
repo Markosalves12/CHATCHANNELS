@@ -1,0 +1,33 @@
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h3>💬 Salas de Chat</h3>
+        <div class="search-container">
+            <input type="text" id="room-search" placeholder="Buscar salas...">
+        </div>
+        <a href="{% url 'create_room' %}" class="create-room-btn">+ Nova Sala</a>
+    </div>
+
+    <div class="rooms-container">
+        <div class="rooms-scrollable" id="chat-room-list">
+            {% for room in chat_rooms %}
+            <a href="{% url 'chat_room' room.name %}" class="chat-room-item {% if room.name == room_name %}active{% endif %}" data-room-name="{{ room.name }}">
+                <span class="room-name">{{ room.name }}</span>
+                {% if room.unread_count > 0 %}
+                <span class="unread-count">{{ room.unread_count }}</span>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="no-rooms">
+                Nenhuma sala disponível
+            </div>
+            {% endfor %}
+            <div class="no-results" id="no-results">
+                Nenhuma sala encontrada
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <a href="{% url 'chat_home' %}" class="home-link">🏠 Página Inicial</a>
+    </div>
+</div>

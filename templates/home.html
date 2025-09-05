@@ -1,0 +1,404 @@
+<!-- chat/templates/chat/home.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zelador Chat - Salas de Chat</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #c0c0c0 0%, #2d3748 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #4a5568;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
+            min-height: 600px;
+        }
+
+        .header {
+            background-color: #2d3748;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 2px solid #1a202c;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            color: #a0aec0;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            padding: 20px;
+            background-color: #2d3748;
+            border-bottom: 1px solid #1a202c;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 1px solid #1a202c;
+            border-radius: 20px;
+            background-color: #4a5568;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #63b3ed;
+            background-color: #2d3748;
+            box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: #a0aec0;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container::after {
+            content: '🔍';
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .room-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .room-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .room-list::-webkit-scrollbar-track {
+            background: #4a5568;
+        }
+
+        .room-list::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 3px;
+        }
+
+        .room-list::-webkit-scrollbar-thumb:hover {
+            background: #1a202c;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 8px;
+            background-color: #2d3748;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .room-item:hover {
+            background-color: #1a202c;
+            border-color: #63b3ed;
+            transform: translateX(3px);
+            text-decoration: none;
+            color: white;
+        }
+
+        .room-item:active {
+            transform: translateX(1px);
+        }
+
+        .room-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .room-name {
+            font-weight: 500;
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+
+        .private-badge {
+            background-color: #718096;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .room-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .unread-count {
+            background-color: #f56565;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(245, 101, 101, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #a0aec0;
+            padding: 60px 20px;
+            font-style: italic;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: #2d3748;
+            border-top: 2px solid #1a202c;
+        }
+
+        .create-room-btn {
+            display: block;
+            width: 100%;
+            background-color: #48bb78;
+            color: white;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .create-room-btn:hover {
+            background-color: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+            text-decoration: none;
+            color: white;
+        }
+
+        .create-room-btn:active {
+            transform: translateY(0);
+        }
+
+        .user-info {
+            background-color: #1a202c;
+            padding: 15px 20px;
+            border-bottom: 1px solid #2d3748;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-name {
+            color: #e2e8f0;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background-color: #718096;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #a0aec0;
+            text-decoration: none;
+            color: white;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #a0aec0;
+            font-style: italic;
+            padding: 20px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: none;
+                height: 90vh;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .room-item {
+                padding: 12px;
+            }
+
+            .room-name {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Zelador Chat</h1>
+            <p>Suas Salas de Chat</p>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <span class="user-name">👤 {{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">Sair</a>
+        </div>
+        {% endif %}
+
+        <div class="search-container">
+            <input type="text" id="room-search" class="search-input" placeholder="Buscar salas...">
+        </div>
+
+        <div class="room-list" id="room-list">
+            {% if chat_rooms %}
+                {% for item in chat_rooms %}
+                    <a href="{% url 'chat_room' item.name %}" class="room-item" data-room-name="{{ item.name }}">
+                        <div class="room-info">
+                            <span class="room-name">{{ item.name }}</span>
+                            {% if item.is_private %}
+                                <span class="private-badge">🔒 Privada</span>
+                            {% endif %}
+                        </div>
+                        <div class="room-meta">
+                            {% if item.unread_count > 0 %}
+                                <span class="unread-count">{{ item.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <p>Nenhuma sala disponível.</p>
+                    <p>Crie uma nova sala para começar!</p>
+                </div>
+            {% endif %}
+            <div class="no-results" id="no-results">
+                Nenhuma sala encontrada
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="{% url 'create_room' %}" class="create-room-btn">+ Nova Sala</a>
+        </div>
+    </div>
+
+    <script>
+        // Funcionalidade de busca
+        const roomSearch = document.getElementById('room-search');
+        const roomList = document.getElementById('room-list');
+        const noResults = document.getElementById('no-results');
+
+        function filterRooms(searchTerm) {
+            const rooms = document.querySelectorAll('.room-item');
+            let hasResults = false;
+
+            rooms.forEach(room => {
+                const roomName = room.getAttribute('data-room-name').toLowerCase();
+                if (roomName.includes(searchTerm.toLowerCase())) {
+                    room.style.display = 'flex';
+                    hasResults = true;
+                } else {
+                    room.style.display = 'none';
+                }
+            });
+
+            // Mostrar/ocultar mensagem de "nenhum resultado"
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = hasResults || searchTerm === '' ? 'block' : 'none';
+            }
+            noResults.style.display = hasResults || searchTerm === '' ? 'none' : 'block';
+        }
+
+        roomSearch.addEventListener('input', function(e) {
+            filterRooms(e.target.value);
+        });
+
+        // Foco no campo de busca com Ctrl+K
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                roomSearch.focus();
+            }
+            if (e.key === 'Escape') {
+                roomSearch.value = '';
+                roomSearch.blur();
+                filterRooms('');
+            }
+        });
+
+        // Auto-foco no campo de busca
+        roomSearch.focus();
+    </script>
+</body>
+</html>
