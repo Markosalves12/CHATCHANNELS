@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Sala - {{ room.name }} | ChatX</title>
+    <title>Editar Sala - {{ room.name }}</title>
     <style>
         * {
             margin: 0;
@@ -13,71 +13,67 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #c0c0c0 0%, #2d3748 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             padding: 20px;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3182ce 100%);
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 30px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-weight: 600;
         }
 
         .header p {
             opacity: 0.9;
-            font-size: 16px;
-            font-weight: 400;
+            font-size: 14px;
         }
 
         .content {
-            padding: 40px 30px;
+            padding: 30px;
         }
 
         .form-group {
-            margin-bottom: 28px;
+            margin-bottom: 25px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 10px;
             font-weight: 600;
-            color: #2d3748;
+            color: #333;
             font-size: 16px;
         }
 
         .form-control {
             width: 100%;
-            padding: 16px 18px;
-            border: 2px solid #e2e8f0;
+            padding: 14px 16px;
+            border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s ease;
-            background-color: #f7fafc;
+            transition: border-color 0.3s ease;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-            background-color: white;
+            border-color: #4a76a8;
+            box-shadow: 0 0 0 3px rgba(74, 118, 168, 0.1);
         }
 
         .form-check {
@@ -85,142 +81,90 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 20px;
-            padding: 16px;
-            background-color: #f7fafc;
-            border-radius: 8px;
-            border: 2px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .form-check:hover {
-            border-color: #cbd5e0;
         }
 
         .form-check-input {
             width: 20px;
             height: 20px;
             cursor: pointer;
-            accent-color: #4299e1;
         }
 
         .form-check-label {
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
-            color: #2d3748;
         }
 
         .room-type-info {
-            background-color: #edf2f7;
-            border-left: 4px solid #4299e1;
-            padding: 16px 20px;
+            background-color: #f8f9fa;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 14px;
-            color: #4a5568;
+            color: #495057;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .participants-section {
-            margin-top: 40px;
-            border-top: 2px solid #e2e8f0;
-            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 2px solid #f1f3f4;
+            padding-top: 25px;
         }
 
         .participants-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .participants-header label {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 0;
+            margin-bottom: 20px;
         }
 
         .search-box {
             position: relative;
-            max-width: 350px;
-            margin-bottom: 20px;
+            max-width: 300px;
         }
 
         .search-input {
             width: 100%;
-            padding: 14px 45px 14px 18px;
-            border: 2px solid #e2e8f0;
+            padding: 12px 40px 12px 16px;
+            border: 2px solid #e1e5e9;
             border-radius: 25px;
             font-size: 14px;
-            background-color: #f7fafc;
-            transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-            background-color: white;
         }
 
         .search-icon {
             position: absolute;
-            right: 18px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: #718096;
-            font-size: 16px;
+            color: #666;
         }
 
         .users-list {
-            max-height: 350px;
+            max-height: 300px;
             overflow-y: auto;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            background-color: #f7fafc;
-        }
-
-        .users-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .users-list::-webkit-scrollbar-track {
-            background: #f7fafc;
-        }
-
-        .users-list::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 3px;
-        }
-
-        .users-list::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
+            border: 2px solid #f1f3f4;
+            border-radius: 8px;
+            padding: 15px;
         }
 
         .user-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 16px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-            background-color: white;
-            border: 2px solid transparent;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
         }
 
         .user-item:hover {
-            background-color: #edf2f7;
-            border-color: #cbd5e0;
+            background-color: #f8f9fa;
         }
 
         .user-item.selected {
-            background-color: #bee3f8;
-            border-color: #4299e1;
-            box-shadow: 0 2px 8px rgba(66, 153, 225, 0.2);
+            background-color: #e8f4fd;
+            border-left: 4px solid #4a76a8;
         }
 
         .user-item:last-child {
@@ -228,17 +172,16 @@
         }
 
         .user-avatar {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 18px;
-            flex-shrink: 0;
+            font-size: 16px;
         }
 
         .user-info {
@@ -247,34 +190,30 @@
 
         .user-name {
             font-weight: 600;
-            color: #2d3748;
-            font-size: 15px;
+            color: #333;
         }
 
         .user-email {
-            font-size: 13px;
-            color: #718096;
-            margin-top: 2px;
+            font-size: 12px;
+            color: #666;
         }
 
         .user-badge {
             font-size: 11px;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 12px;
-            background: #48bb78;
+            background: #4a76a8;
             color: white;
-            font-weight: 600;
         }
 
         .btn-group {
             display: flex;
             gap: 15px;
-            margin-top: 40px;
-            flex-wrap: wrap;
+            margin-top: 30px;
         }
 
         .btn {
-            padding: 16px 32px;
+            padding: 14px 28px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
@@ -285,120 +224,79 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
         }
 
         .btn-secondary {
-            background: #718096;
+            background: #6c757d;
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #4a5568;
-            text-decoration: none;
-            color: white;
+            background: #5a6268;
         }
 
         .alert {
-            padding: 16px 20px;
+            padding: 12px 16px;
             border-radius: 8px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-size: 14px;
-            font-weight: 500;
         }
 
         .alert-error {
-            background-color: #fed7d7;
-            color: #c53030;
-            border: 1px solid #feb2b2;
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
         }
 
         .alert-success {
-            background-color: #c6f6d5;
-            color: #2f855a;
-            border: 1px solid #9ae6b4;
+            background-color: #efe;
+            color: #363;
+            border: 1px solid #cfc;
         }
 
         .empty-state {
             text-align: center;
-            padding: 50px 20px;
-            color: #718096;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
+            padding: 40px;
+            color: #666;
         }
 
         .selected-count {
-            background: #4299e1;
+            background: #4a76a8;
             color: white;
-            padding: 6px 16px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
         }
 
         .select-all-container {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            background-color: #edf2f7;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .select-all-container input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #4299e1;
-        }
-
-        .select-all-container label {
-            font-weight: 500;
-            color: #4a5568;
-            cursor: pointer;
-            margin-bottom: 0;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
             .container {
-                margin: 0;
+                margin: 10px;
             }
 
             .header {
-                padding: 30px 20px;
-            }
-
-            .header h1 {
-                font-size: 28px;
+                padding: 20px;
             }
 
             .content {
-                padding: 30px 20px;
+                padding: 20px;
             }
 
             .btn-group {
@@ -414,10 +312,6 @@
             .search-box {
                 max-width: none;
             }
-
-            .users-list {
-                max-height: 250px;
-            }
         }
     </style>
 </head>
@@ -425,7 +319,7 @@
     <div class="container">
         <div class="header">
             <h1>✍️ Editar Sala: {{ room.name }}</h1>
-            <p>Configure o nome da sala e gerencie os participantes</p>
+            <p>Atualize o nome da sala ou os participantes</p>
         </div>
 
         <div class="content">
@@ -444,7 +338,7 @@
                     <label for="{{ form.name.id_for_label }}">Nome da Sala:</label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                        <div style="color: #c53030; font-size: 12px; margin-top: 5px;">
+                        <div style="color: #c33; font-size: 12px; margin-top: 5px;">
                             {{ form.name.errors.0 }}
                         </div>
                     {% endif %}
@@ -453,12 +347,12 @@
                 <div class="form-check">
                     {{ form.is_private }}
                     <label for="{{ form.is_private.id_for_label }}" class="form-check-label">
-                        🔒 Sala Privada
+                        Sala Privada
                     </label>
                 </div>
 
                 <div class="room-type-info" id="room-type-info">
-                    <span id="room-type-icon">🔒</span>
+                    <span>🔒</span>
                     <span id="room-type-text">
                         {% if room.is_private %}
                             Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.
@@ -470,20 +364,20 @@
 
                 <div class="participants-section" id="participants-section">
                     <div class="participants-header">
-                        <label>👥 Participantes da Sala:</label>
+                        <label>Participantes:</label>
                         <div class="selected-count" id="selected-count">
-                            {{ form.initial.participants.count }} selecionado(s)
+                            {{ form.initial.participants.count }} selecionados
                         </div>
                     </div>
 
                     <div class="select-all-container">
                         <input type="checkbox" id="select-all-users" onchange="toggleSelectAll(this)">
-                        <label for="select-all-users">Selecionar todos os usuários</label>
+                        <label for="select-all-users">Selecionar todos</label>
                     </div>
 
                     <div class="search-box">
                         <input type="text" class="search-input" id="user-search"
-                               placeholder="Buscar usuários por nome ou email..." onkeyup="filterUsers()">
+                               placeholder="Buscar usuários..." onkeyup="filterUsers()">
                         <span class="search-icon">🔍</span>
                     </div>
 
@@ -509,7 +403,6 @@
                         </div>
                         {% empty %}
                         <div class="empty-state">
-                            <div class="empty-state-icon">👥</div>
                             <p>Nenhum usuário disponível para adicionar</p>
                         </div>
                         {% endfor %}
@@ -520,8 +413,8 @@
                     <button type="submit" class="btn btn-primary">
                         💾 Salvar Alterações
                     </button>
-                    <a href="{% url 'chat_room' room_name=room.name %}" class="btn btn-secondary">
-                        ← Voltar ao Chat
+                    <a href="{% url 'chat_room' id_random=room.id_random %}" class="btn btn-secondary">
+                        ← Cancelar
                     </a>
                 </div>
             </form>
@@ -549,17 +442,14 @@
         // Mostrar/ocultar seção de participantes baseado no tipo de sala
         document.getElementById('{{ form.is_private.id_for_label }}').addEventListener('change', function() {
             const participantsSection = document.getElementById('participants-section');
-            const roomTypeText = document.getElementById('room-type-text');
-            const roomTypeIcon = document.getElementById('room-type-icon');
+            const roomTypeInfo = document.getElementById('room-type-text');
 
             if (this.checked) {
                 participantsSection.style.display = 'block';
-                roomTypeText.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
-                roomTypeIcon.textContent = '🔒';
+                roomTypeInfo.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
             } else {
                 participantsSection.style.display = 'none';
-                roomTypeText.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
-                roomTypeIcon.textContent = '🌐';
+                roomTypeInfo.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
             }
         });
 
@@ -584,7 +474,7 @@
         function toggleSelectAll(checkbox) {
             const userCheckboxes = document.querySelectorAll('.user-checkbox');
             userCheckboxes.forEach(cb => {
-                // Não desmarca o criador da sala se estiver deselecionando todos
+                // Não desmarca o criador da sala se estiver selecionando todos
                 if (!checkbox.checked && cb.parentElement.querySelector('.user-badge')) {
                     return; // Mantém o criador selecionado
                 }
@@ -608,16 +498,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             const isPrivate = document.getElementById('{{ form.is_private.id_for_label }}').checked;
             const participantsSection = document.getElementById('participants-section');
-            const roomTypeText = document.getElementById('room-type-text');
-            const roomTypeIcon = document.getElementById('room-type-icon');
+            const roomTypeInfo = document.getElementById('room-type-text');
 
             if (!isPrivate) {
                 participantsSection.style.display = 'none';
-                roomTypeText.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
-                roomTypeIcon.textContent = '🌐';
+                roomTypeInfo.textContent = 'Esta é uma sala pública. Todos os usuários podem acessá-la.';
             } else {
-                roomTypeText.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
-                roomTypeIcon.textContent = '🔒';
+                roomTypeInfo.textContent = 'Esta é uma sala privada. Apenas os participantes selecionados podem acessá-la.';
             }
 
             updateSelectedCount(); // Inicializa o contador ao carregar a página
@@ -639,28 +526,7 @@
             const submitButton = this.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             submitButton.innerHTML = '⏳ Salvando...';
-
-            // Reabilitar o botão após 5 segundos em caso de erro
-            setTimeout(() => {
-                submitButton.disabled = false;
-                submitButton.innerHTML = '💾 Salvar Alterações';
-            }, 5000);
-        });
-
-        // Atalhos de teclado
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('user-search').focus();
-            }
-            if (e.key === 'Escape') {
-                const searchInput = document.getElementById('user-search');
-                searchInput.value = '';
-                searchInput.blur();
-                filterUsers();
-            }
         });
     </script>
 </body>
 </html>
-

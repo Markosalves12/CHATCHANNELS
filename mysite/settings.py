@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,25 +23,47 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tfpzo=p01^ye5ms07gdxs+n=4#y%if7q^k$o6sq6cae7!bi1o!'
+SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'gerente.Gerente'
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.AllowAllUsersModelBackend',
+    'gerente.backends.CaseInsensitiveModelBackend',
+)
+
+
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL') == 'True'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 # Application definition
 
 INSTALLED_APPS = [
     'daphne',
-    'chat',
+    'chat.apps.ChatConfig',
+    'attachments.apps.AttachmentsConfig',
+    'message.apps.MessageConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'gerente.apps.GerenteConfig',
+    'empresaprimaria.apps.EmpresaprimariaConfig',
+    'empresasecundario.apps.EmpresasecundarioConfig',
+    'zeladorx.apps.ZeladorxConfig',
+    'notifications.apps.NotificationsConfig',
 ]
 
 MIDDLEWARE = [
@@ -56,7 +81,7 @@ ROOT_URLCONF = 'mysite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,6 +91,8 @@ TEMPLATES = [
                 'chat.context_processors.user_chat_rooms',
                 'chat.context_processors.room_context_processor',
                 'chat.context_processors.available_users',
+                'zeladorx.context_processors.create_global_parameters',
+                'zeladorx.context_processors.define_wallet',
             ],
         },
     },
@@ -86,10 +113,23 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'zeladorxv2',  # Nome do seu banco de dados
+        'USER': 'postgresv2',  # Nome do usuário
+        'PASSWORD': 'zeladorxv2',  # Senha em branco se não houver senha
+        'HOST': 'localhost',  # O banco de dados está na mesma máquina
+        'PORT': '5432',  # Porta padrão do PostgreSQL
     }
 }
 
@@ -129,6 +169,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(
+        BASE_DIR, 'mysite/static'
+    )
+]
+
+STATIC_ROOT = os.path.join(
+    BASE_DIR, 'static'
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

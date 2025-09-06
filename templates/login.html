@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ChatX</title>
+    <title>Login - Sistema de Chat</title>
     <style>
         * {
             margin: 0;
@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #c0c0c0 0%, #2d3748 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -25,189 +25,164 @@
         .login-container {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             overflow: hidden;
         }
 
         .login-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3182ce 100%);
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 30px;
             text-align: center;
         }
 
         .login-header h1 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-weight: 600;
         }
 
         .login-header p {
             opacity: 0.9;
-            font-size: 16px;
-            font-weight: 400;
+            font-size: 14px;
         }
 
         .login-form {
-            padding: 40px 30px;
+            padding: 30px;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2d3748;
+            color: #333;
             font-size: 14px;
         }
 
         .form-control {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s ease;
-            background-color: #f7fafc;
+            transition: border-color 0.3s ease;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-            background-color: white;
+            border-color: #4a76a8;
+            box-shadow: 0 0 0 3px rgba(74, 118, 168, 0.1);
         }
 
         .btn-login {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            padding: 14px;
+            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+            box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
         }
 
         .btn-login:active {
             transform: translateY(0);
         }
 
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .login-links {
-            text-align: center;
             margin-top: 20px;
+            text-align: center;
         }
 
         .login-links a {
-            color: #4299e1;
+            color: #4a76a8;
             text-decoration: none;
             font-size: 14px;
-            font-weight: 500;
+            margin: 0 10px;
             transition: color 0.3s ease;
         }
 
         .login-links a:hover {
-            color: #3182ce;
+            color: #3a5a80;
             text-decoration: underline;
         }
 
         .alert {
-            padding: 14px 16px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             font-size: 14px;
-            font-weight: 500;
         }
 
         .alert-error {
-            background-color: #fed7d7;
-            color: #c53030;
-            border: 1px solid #feb2b2;
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
         }
 
         .alert-success {
-            background-color: #c6f6d5;
-            color: #2f855a;
-            border: 1px solid #9ae6b4;
+            background-color: #efe;
+            color: #363;
+            border: 1px solid #cfc;
         }
 
         .alert-info {
-            background-color: #bee3f8;
-            color: #2c5282;
-            border: 1px solid #90cdf4;
+            background-color: #eef;
+            color: #336;
+            border: 1px solid #ccf;
         }
 
-        .info-section {
-            background-color: #edf2f7;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 24px;
-            border-left: 4px solid #4299e1;
-        }
-
-        .info-section h3 {
-            color: #2d3748;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
+        .form-divider {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .info-section p {
-            color: #4a5568;
+            margin: 25px 0;
+            color: #666;
             font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 8px;
         }
 
-        .info-section .contact-info {
-            background-color: #f7fafc;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #718096;
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #e1e5e9;
+            margin: 0 10px;
         }
 
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            opacity: 0.6;
-            font-size: 18px;
-            transition: opacity 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
         }
 
-        .password-toggle:hover {
-            opacity: 1;
-        }
-
-        .form-group.password-group {
-            position: relative;
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            color: white;
+            text-decoration: none;
         }
 
         @media (max-width: 480px) {
@@ -217,15 +192,11 @@
             }
 
             .login-header {
-                padding: 30px 20px;
+                padding: 20px;
             }
 
             .login-form {
-                padding: 30px 20px;
-            }
-
-            .login-header h1 {
-                font-size: 28px;
+                padding: 20px;
             }
         }
     </style>
@@ -234,7 +205,7 @@
     <div class="login-container">
         <div class="login-header">
             <h1>Zelador Chat</h1>
-            <p>Sistema de Chat ZeladorX</p>
+            <p>Sistema de chats ZeladorX</p>
         </div>
 
         <div class="login-form">
@@ -248,40 +219,35 @@
             {% endif %}
 
             <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
 
-                <input type="hidden" name="next" value="{{ request.GET.next }}">
-
-                <div class="form-group">
-                    <label for="id_username">Username:</label>
-                    <input type="text" name="username" id="id_username" class="form-control"
-                           placeholder="Digite seu username" required autofocus
-                           value="{{ form.username.value|default:'' }}">
-                    {% if form.username.errors %}
-                        <div style="color: #c53030; font-size: 12px; margin-top: 5px;">
-                            {{ form.username.errors.0 }}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group password-group">
-                    <label for="id_password">Senha:</label>
-                    <input type="password" name="password" id="id_password" class="form-control"
-                           placeholder="Digite sua senha" required>
-                    <span class="password-toggle" id="togglePassword">👁️</span>
-                    {% if form.password.errors %}
-                        <div style="color: #c53030; font-size: 12px; margin-top: 5px;">
-                            {{ form.password.errors.0 }}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="btn-login">Login</button>
-            </form>
-
-            <div class="login-links">
-                <a href="">🔑 Esqueci minha senha</a>
+            <div class="form-group">
+                <label for="id_email">Email:</label>
+                <input type="text" name="email" id="id_email" class="form-control"
+                       placeholder="example@email.com.br" required autofocus
+                       value="{{ form.email.value|default:'' }}">
+                {% if form.email.errors %}
+                    <div style="color: #c33; font-size: 12px; margin-top: 5px;">
+                        {{ form.email.errors.0 }}
+                    </div>
+                {% endif %}
             </div>
+
+            <div class="form-group">
+                <label for="id_senha">Senha:</label>
+                <input type="password" name="senha" id="id_senha" class="form-control"
+                       placeholder="Sua senha" required>
+                {% if form.senha.errors %}
+                    <div style="color: #c33; font-size: 12px; margin-top: 5px;">
+                        {{ form.senha.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-login">Login</button>
+        </form>
+
         </div>
     </div>
 
@@ -294,17 +260,26 @@
             const submitButton = this.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             submitButton.textContent = 'Entrando...';
-
-            // Reabilitar o botão após 3 segundos em caso de erro
-            setTimeout(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = '🚀 Entrar no ChatX';
-            }, 3000);
         });
 
-        // Toggle para mostrar/ocultar senha
+        // Mostrar/ocultar senha (opcional)
         const passwordInput = document.getElementById('id_password');
-        const togglePassword = document.getElementById('togglePassword');
+        const togglePassword = document.createElement('span');
+        togglePassword.style.cssText = `
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            opacity: 0.5;
+            font-size: 18px;
+        `;
+        togglePassword.innerHTML = '👁️';
+        togglePassword.title = 'Mostrar senha';
+
+        const passwordGroup = document.querySelector('.form-group:has(#id_password)');
+        passwordGroup.style.position = 'relative';
+        passwordGroup.appendChild(togglePassword);
 
         togglePassword.addEventListener('click', function() {
             if (passwordInput.type === 'password') {
@@ -317,9 +292,6 @@
                 this.title = 'Mostrar senha';
             }
         });
-
-        // Adicionar título ao toggle
-        togglePassword.title = 'Mostrar senha';
     </script>
 </body>
 </html>

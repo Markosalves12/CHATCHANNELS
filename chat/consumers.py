@@ -1,10 +1,12 @@
 from asgiref.sync import sync_to_async
 from django.utils import timezone
-from .models import Message, UserProfile
+from .models import UserProfile
+from chat.models import Message
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import ChatRoom, Attachment
+from .models import ChatRoom
+from attachments.models import Attachment
 from .utils import get_user_chat_rooms_data
 from django.core.files.base import ContentFile
 import base64
@@ -13,8 +15,9 @@ import uuid
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
+        # Agora usamos id_random em vez de room_name
+        self.room_id_random = self.scope["url_route"]["kwargs"]["id_random"]
+        self.room_group_name = f"chat_{self.room_id_random}"
         self.user = self.scope["user"]
 
         if not self.user.is_authenticated:
@@ -31,7 +34,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # Garantir que usuário seja membro em salas privadas
-        room = await sync_to_async(ChatRoom.objects.get)(name=self.room_name)
+        room = await sync_to_async(ChatRoom.objects.get)(id_random=self.room_id_random)
         if room.is_private:
             await self.ensure_user_membership(room)
 
@@ -66,16 +69,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def check_room_access(self):
         """Verifica se usuário tem acesso à sala"""
         try:
-            room = ChatRoom.objects.get(name=self.room_name)
+            room = ChatRoom.objects.get(id_random=self.room_id_random)
             return room.can_user_access(self.user)
         except ChatRoom.DoesNotExist:
-            # Cria sala pública se não existir
-            ChatRoom.objects.create(
-                name=self.room_name,
-                created_by=self.user,
-                is_private=False
-            )
-            return True
+            return False  # Sala não existe, não criamos automaticamente
 
     @sync_to_async
     def ensure_user_membership(self, room):
@@ -105,7 +102,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_messages_history_data(self):
         """Obtém histórico de mensagens"""
         try:
-            room = ChatRoom.objects.get(name=self.room_name)
+            room = ChatRoom.objects.get(id_random=self.room_id_random)
             messages = Message.objects.filter(room=room).select_related("author").order_by("timestamp")[:50]
             return [
                 {
@@ -153,60 +150,83 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
+
             elif message_type == "chat_message":
+
                 message_content = data.get("message", "").strip()
+
                 attachments = data.get("attachments", [])
 
-                # Validate attachment count
-                if len(attachments) > 5:  # Configurable limit
+                temp_id = data.get("temp_id")  # <-- pega o temp_id do front
+
+                # Validação básica
+
+                if len(attachments) > 5:
                     await self.send(text_data=json.dumps({
+
                         "type": "error",
+
                         "message": "Máximo de 5 anexos por mensagem"
+
                     }))
+
                     return
 
                 await self.update_user_activity()
+
                 message, room_members = await self.save_message_with_attachments(message_content, attachments)
 
                 if message:
-                    attachments_data = []
-                    # Ensure attachments are committed before accessing URLs
-                    related_attachments = await database_sync_to_async(list)(message.attachments.all())
 
-                    # try:
-                    #     attachments_data = await sync_to_async(message.get_attachments_data)()
-                    # except Exception as e:
-                    #     print(f"Erro ao obter dados de anexos: {e}")
-                    #     attachments_data = []  # Fallback to empty list to avoid breaking the broadcast
+                    attachments_data = []
+
+                    related_attachments = await database_sync_to_async(list)(message.attachments.all())
 
                     for attachment in related_attachments:
                         attachments_data.append({
+
                             'file_url': attachment.file.url,
+
                             'original_filename': attachment.original_filename,
+
                             'attachment_type': attachment.attachment_type,
-                            # Supondo que seu modelo Attachment tenha este campo
+
                         })
 
+                    # Envia para todos no grupo (incluindo o autor)
+
                     await self.channel_layer.group_send(
+
                         self.room_group_name,
+
                         {
+
                             "type": "chat_message",
+
                             "message": message.content,
+
                             "author": self.user.username,
+
                             "author_id": self.user.id,
+
                             "message_id": message.id,
+
+                            "temp_id": temp_id,  # <-- passa para front substituir placeholder
+
                             "timestamp": message.timestamp.isoformat(),
+
                             "is_system_message": False,
+
                             "attachments": attachments_data
+
                         }
+
                     )
+
                     await self.send_unread_count_update()
+
                     await self.notify_users_of_new_message(room_members)
-                else:
-                    await self.send(text_data=json.dumps({
-                        "type": "error",
-                        "message": "Erro ao salvar mensagem ou anexos"
-                    }))
+
 
         except json.JSONDecodeError as e:
             print(f"Erro ao decodificar JSON: {e}")
@@ -221,7 +241,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": f"Erro interno: {str(e)}"
             }))
 
-
     @sync_to_async
     def save_message_with_attachments(self, message_content, attachments):
         """
@@ -229,7 +248,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Suporta arquivos base64 com ou sem header (data:...;base64,...).
         """
         try:
-            room, _ = ChatRoom.objects.get_or_create(name=self.room_name)
+            room = ChatRoom.objects.get(id_random=self.room_id_random)
             message = Message.objects.create(
                 room=room,
                 author=self.user,
@@ -254,7 +273,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             print(f"Aviso: formato de arquivo desconhecido: {filename}")
                             continue
 
-                        # CORREÇÃO: Preservar a extensão original corretamente
+                        # Preservar a extensão original corretamente
                         name, ext = os.path.splitext(filename)
 
                         # Se não tiver extensão, tentar detectar pelo tipo MIME
@@ -279,28 +298,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 except Exception as e:
                     print(f"Erro ao salvar anexo '{filename}': {e}")
 
-
             return message, list(room.members.all())
 
         except Exception as e:
             print(f"Erro ao salvar mensagem com anexos: {e}")
-            return None, []
-
-
-    @sync_to_async
-    def save_message(self, message_content):
-        """Salva mensagem no banco e retorna a sala e seus membros."""
-        try:
-            room, _ = ChatRoom.objects.get_or_create(name=self.room_name)
-            message = Message.objects.create(
-                room=room,
-                author=self.user,
-                content=message_content
-            )
-            # Retorna a mensagem salva e os membros da sala para notificação posterior
-            return message, list(room.members.all())
-        except Exception as e:
-            print(f"Erro ao salvar mensagem: {e}")
             return None, []
 
     # ------------------------
@@ -325,7 +326,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
 
     # ------------------------
-    # Leitura de mensagens (simplificado)
+    # Leitura de mensagens
     # ------------------------
 
     async def mark_messages_as_read(self):
@@ -343,7 +344,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     def _mark_messages_as_read_sync(self):
         try:
-            room = ChatRoom.objects.get(name=self.room_name)
+            room = ChatRoom.objects.get(id_random=self.room_id_random)
             unread_messages = Message.objects.filter(room=room).exclude(read_by=self.user)
 
             for msg in unread_messages:
@@ -394,6 +395,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "author": event["author"],
             "author_id": event["author_id"],
             "message_id": event["message_id"],
+            "temp_id": event["temp_id"],
             "timestamp": event["timestamp"],
             "attachments": event.get("attachments", []),
         }))
@@ -414,78 +416,76 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def user_left(self, event):
-        # Envie como tipo 'user_left' em vez de 'user_activity'
         await self.send(text_data=json.dumps({
-            "type": "user_left",  # Alterado para corresponder ao esperado no JS
+            "type": "user_left",
             "username": event["username"],
         }))
 
     async def room_deleted(self, event):
-        # Envia evento para todos os usuários conectados na sala
         await self.send(text_data=json.dumps({
             "type": "room_deleted",
-            "room_name": event["room_name"],
+            "room_id_random": event["room_id_random"],
         }))
 
 
 
-class ChatHomeConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        user = self.scope["user"]
-        if not user.is_authenticated:
-            await self.close()
-            return
-
-        self.user_group_name = f"user_{user.id}"
-
-        # Adiciona o usuário ao grupo pessoal
-        await self.channel_layer.group_add(
-            self.user_group_name,
-            self.channel_name
-        )
-        await self.accept()
-
-        # Envia estado inicial (contagem de mensagens não lidas)
-        await self.send_unread_counts(user)
-
-    async def disconnect(self, close_code):
-        user = self.scope["user"]
-        await self.channel_layer.group_discard(
-            f"user_{user.id}",
-            self.channel_name
-        )
-
-    # ------------------------
-    # Eventos
-    # ------------------------
-
-    async def unread_count_update(self, event):
-        """Atualiza contadores de não lidas na home."""
-        await self.send(text_data=json.dumps({
-            "type": "unread_count_update",
-            "room_data": event["room_data"]
-        }))
-
-    async def room_deleted(self, event):
-        """Notifica que a sala foi excluída."""
-        await self.send(text_data=json.dumps({
-            "type": "room_deleted",
-            "room_name": event["room_name"],
-        }))
-
-    # ------------------------
-    # Utils
-    # ------------------------
-    @database_sync_to_async
-    def send_unread_counts(self, user):
-        """Envia os contadores iniciais quando o usuário se conecta."""
-        room_data = get_user_chat_rooms_data(user)
-        return self.send(text_data=json.dumps({
-            "type": "unread_count_update",
-            "room_data": room_data
-        }))
-
-    @database_sync_to_async
-    def get_message_attachments(self, message_id):
-        # Retorna uma lista de objetos Attachment para serem serializados
-        return list(Attachment.objects.filter(message_id=message_id))
+# class ChatHomeConsumer(AsyncWebsocketConsumer):
+#     async def connect(self):
+#         user = self.scope["user"]
+#         if not user.is_authenticated:
+#             await self.close()
+#             return
+#
+#         self.user_group_name = f"user_{user.id}"
+#
+#         # Adiciona o usuário ao grupo pessoal
+#         await self.channel_layer.group_add(
+#             self.user_group_name,
+#             self.channel_name
+#         )
+#         await self.accept()
+#
+#         # Envia estado inicial (contagem de mensagens não lidas)
+#         await self.send_unread_counts(user)
+#
+#     async def disconnect(self, close_code):
+#         user = self.scope["user"]
+#         await self.channel_layer.group_discard(
+#             f"user_{user.id}",
+#             self.channel_name
+#         )
+#
+#     # ------------------------
+#     # Eventos
+#     # ------------------------
+#
+#     async def unread_count_update(self, event):
+#         """Atualiza contadores de não lidas na home."""
+#         await self.send(text_data=json.dumps({
+#             "type": "unread_count_update",
+#             "room_data": event["room_data"]
+#         }))
+#
+#     async def room_deleted(self, event):
+#         """Notifica que a sala foi excluída."""
+#         await self.send(text_data=json.dumps({
+#             "type": "room_deleted",
+#             "room_name": event["room_name"],
+#         }))
+#
+#     # ------------------------
+#     # Utils
+#     # ------------------------
+#     @database_sync_to_async
+#     def send_unread_counts(self, user):
+#         """Envia os contadores iniciais quando o usuário se conecta."""
+#         room_data = get_user_chat_rooms_data(user)
+#         return self.send(text_data=json.dumps({
+#             "type": "unread_count_update",
+#             "room_data": room_data
+#         }))
+#
+#     @database_sync_to_async
+#     def get_message_attachments(self, message_id):
+#         # Retorna uma lista de objetos Attachment para serem serializados
+#         return list(Attachment.objects.filter(message_id=message_id))

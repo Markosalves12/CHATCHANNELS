@@ -22,5 +22,9 @@ class TypeZeladoria(models.Model):
         unique=True,
     )
 
+    class Meta:
+        managed = False,
+        db_table = "zeladorx_typezeladoria"
+
     def __str__(self):
         return self.setor

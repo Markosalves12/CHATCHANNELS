@@ -17,13 +17,6 @@ class EmpresaPrimaria(models.Model):
         max_length=120,
     )
 
-    # CNPJ = models.CharField(
-    #     blank=False,
-    #     null=False,
-    #     max_length=40,
-    #     unique=True
-    # )
-
     N_unidades = models.IntegerField(
         blank=False,
         null=False,

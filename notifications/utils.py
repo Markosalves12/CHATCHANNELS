@@ -1,5 +1,5 @@
 from django.core.mail import EmailMessage, send_mail
-from setup.settings import EMAIL_HOST_USER
+from mysite.settings import EMAIL_HOST_USER
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 

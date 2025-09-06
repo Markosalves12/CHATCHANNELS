@@ -1,5 +1,6 @@
 from django.db.models import Q
-from .models import ChatRoom, Message
+from .models import ChatRoom
+from chat.models import Message
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 
@@ -30,6 +31,7 @@ def get_user_chat_rooms_data(user):
 
         room_data.append({
             'name': room.name,
+            'id_random': room.id_random,
             'is_private': room.is_private,
             'unread_count': unread_count,
             'last_message_timestamp': last_message_timestamp.isoformat()  # Convertido para string
@@ -63,6 +65,7 @@ def get_room_members_context(request):
                 context = {
                     'current_room_members': {
                         'room_name': room.name,
+                        'id_random': room.id_random,
                         'is_private': room.is_private,
                         'created_by': room.created_by.username,
                         'members': members_info,
