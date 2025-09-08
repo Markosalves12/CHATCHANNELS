@@ -90,6 +90,7 @@ def get_message_history(request, id_random):
                     attachment_type = "document"
 
                 attachments_data.append({
+                    "id": att.id,
                     "file_url": att.file.url,
                     "original_filename": att.original_filename,
                     "attachment_type": attachment_type,

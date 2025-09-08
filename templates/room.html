@@ -744,7 +744,7 @@ body {
 
 <div id="sidebar">
     <div class="sidebar-header">
-        <h3>ChatX</h3>
+        <h3>Zelador Chat</h3>
         <div class="search-container">
             <input type="text" id="room-search" placeholder="Buscar salas...">
         </div>
@@ -985,6 +985,7 @@ async function createAttachmentsHtml(attachments) {
         const fileUrl = att.file_url;
         const filename = att.original_filename;
         const attachmentType = att.attachment_type.toLowerCase();
+        const attachmentId = att.id;
 
         const isAccessible = await checkAttachmentAccessibility(fileUrl);
 
@@ -1010,6 +1011,7 @@ async function createAttachmentsHtml(attachments) {
                         <span>${filename}</span>
                      </a>`;
         }
+
         html += `</div>`;
     }
     return `<div class="attachments">${html}</div>`;

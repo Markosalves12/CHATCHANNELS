@@ -539,6 +539,7 @@ def get_message_history(request, id_random):
             # Supondo que você tenha um related_name 'attachments' no seu modelo Message
             for att in msg.attachments.all():
                 attachments_data.append({
+                    'id': att.id,
                     'file': att.file.url,
                     'original_filename': att.original_filename,
                 })
