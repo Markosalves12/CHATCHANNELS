@@ -720,24 +720,6 @@ body {
     padding: 20px;
     color: #666;
 }
-
-.deleted-attachment {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border: 1px dashed #e74c3c;
-    border-radius: 6px;
-    background-color: #fdecea;
-    color: #e74c3c;
-    font-style: italic;
-    font-size: 0.9em;
-}
-
-.deleted-attachment .file-icon {
-    font-size: 1.2em;
-}
-
 </style>
 </head>
 <body>
@@ -799,9 +781,6 @@ body {
                     ✏️ Editar Sala
                 </a>
             {% endif %}
-            <a class="home-link-chat">
-                    {{ user.username }} | {{ user.email }}
-            </a>
         </div>
     </div>
 
@@ -837,7 +816,7 @@ body {
                 {% for member in current_room_members.members %}
                 <li>
                     <span>{{ member.user }}</span>
-                    {% if member.user == current_room_members.created_by %}
+                    {% if member.user != current_room_members.created_by %}
                     <span class="tag">{{ member.user }} (criador)</span>
                     {% endif %}
                     <span class="online-status {% if member.is_online %}online{% endif %}"></span>
@@ -928,97 +907,10 @@ const chatSocket = new WebSocket(
     'ws://' + window.location.host + '/ws/chat/' + roomIdRandom + '/'
 );
 
-// Função para checar acessibilidade (já boa, mas adicionei um timeout pra evitar travar em requests lentos)
-async function checkAttachmentAccessibility(url) {
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-        const response = await fetch(url, {
-            method: 'HEAD',
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        return response.ok; // true se 2xx
-    } catch (error) {
-        console.warn(`Erro ao verificar acessibilidade do anexo ${url}:`, error);
-        return false; // Erro de rede, timeout ou CORS → considera inacessível
-    }
-}
-
-// Versão síncrona para preview local (sem check, pois URLs locais sempre funcionam)
-function createLocalAttachmentsHtml(attachments) {
-    let html = '';
-    for (const att of attachments) {
-        const fileUrl = att.file_url; // URL.createObjectURL local
-        const filename = att.original_filename;
-        const attachmentType = att.attachment_type.toLowerCase();
-
-        html += `<div class="attachment-in-message">`;
-        if (attachmentType === 'image') {
-            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></a>`;
-        } else if (attachmentType === 'video') {
-            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
-        } else if (attachmentType === 'audio') {
-            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
-        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        } else {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        }
-        html += `</div>`;
-    }
-    return `<div class="attachments">${html}</div>`;
-}
-
-// Versão async para anexos do servidor (com check)
-async function createAttachmentsHtml(attachments) {
-    let html = '';
-    for (const att of attachments) {
-        const fileUrl = att.file_url;
-        const filename = att.original_filename;
-        const attachmentType = att.attachment_type.toLowerCase();
-
-        const isAccessible = await checkAttachmentAccessibility(fileUrl);
-
-        html += `<div class="attachment-in-message">`;
-        if (!isAccessible) {
-            html += `<span class="file-icon" style="color: red;">⚠️</span>
-                     <span style="color: red; font-style: italic;">Anexo não encontrado: ${filename}</span>
-                     <br><small style="color: gray;">(Pode ter sido removido ou há um erro de acesso)</small>`;
-        } else if (attachmentType === 'image') {
-            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></img></a>`;
-        } else if (attachmentType === 'video') {
-            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
-        } else if (attachmentType === 'audio') {
-            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
-        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        } else {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        }
-        html += `</div>`;
-    }
-    return `<div class="attachments">${html}</div>`;
-}
-
-// Buscar histórico de mensagens (agora async e com await)
+// Buscar histórico de mensagens
 async function fetchMessageHistory() {
     try {
-        const response = await fetch(`/message/${roomIdRandom}/messages/`);
+        const response = await fetch(`/chat/${roomIdRandom}/messages/`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -1028,9 +920,9 @@ async function fetchMessageHistory() {
         if (history.length === 0) {
             chatLogContainer.innerHTML = '<div class="message system">Nenhuma mensagem nesta sala ainda. Seja o primeiro a conversar!</div>';
         } else {
-            for (const message of history) { // Loop síncrono, mas await dentro da func
-                await addMessageToLog(message);
-            }
+            history.forEach(message => {
+                addMessageToLog(message);
+            });
         }
         scrollToBottom();
     } catch (error) {
@@ -1078,8 +970,8 @@ roomSearch.addEventListener('input', function(e) {
     filterRooms(e.target.value);
 });
 
-// Manipulador de mensagens WebSocket (agora async)
-async function handleWebSocketMessage(data) {
+// Manipulador de mensagens WebSocket
+function handleWebSocketMessage(data) {
     switch(data.type) {
         case 'chat_message':
             if (data.temp_id) {
@@ -1101,24 +993,13 @@ async function handleWebSocketMessage(data) {
                     if (pTag) {
                         pTag.textContent = data.message || data.content || '';
                     }
-
-                    // Re-render anexos do servidor (com check de acessibilidade)
-                    if (data.attachments && data.attachments.length > 0) {
-                        const attachmentsHtml = await createAttachmentsHtml(data.attachments);
-                        const existingAttachments = pending.querySelector('.attachments');
-                        if (existingAttachments) {
-                            existingAttachments.outerHTML = attachmentsHtml; // Substitui o preview local pelo real
-                        } else {
-                            pending.innerHTML += attachmentsHtml; // Adiciona se não existir
-                        }
-                    }
                 } else {
-                    // Se não encontrar pendente, adiciona normalmente (com await)
-                    await addMessageToLog(data);
+                    // Se não encontrar pendente, adiciona normalmente
+                    addMessageToLog(data);
                 }
             } else {
                 // Mensagem recebida de outro usuário → adiciona normalmente
-                await addMessageToLog(data);
+                addMessageToLog(data);
             }
             break;
 
@@ -1165,8 +1046,8 @@ function handleUserLeft(data) {
     }
 }
 
-// Funções de manipulação de mensagens (agora ASYNC!)
-async function addMessageToLog(data) {
+// Funções de manipulação de mensagens
+function addMessageToLog(data) {
     console.log('addMessageToLog data:', data);
 
     // Evitar duplicados
@@ -1178,21 +1059,8 @@ async function addMessageToLog(data) {
     }
 
     const div = document.createElement('div');
+    const attachmentsHtml = data.attachments && data.attachments.length > 0 ? createAttachmentsHtml(data.attachments) : '';
     const messageContent = data.content || data.message || '';
-
-    // Detecta se é preview local (temp_id presente e attachments com URL.createObjectURL-like)
-    const isLocalPreview = data.temp_id && data.attachments && data.attachments.some(att => att.file_url.startsWith('blob:'));
-
-    let attachmentsHtml = '';
-    if (data.attachments && data.attachments.length > 0) {
-        if (isLocalPreview) {
-            // Usa versão síncrona para preview local (rápido, sem check)
-            attachmentsHtml = createLocalAttachmentsHtml(data.attachments);
-        } else {
-            // Para histórico e mensagens do servidor: async com check
-            attachmentsHtml = await createAttachmentsHtml(data.attachments);
-        }
-    }
 
     if (data.is_system_message) {
         div.classList.add('message', 'system');
@@ -1220,6 +1088,38 @@ async function addMessageToLog(data) {
 
     chatLogContainer.appendChild(div);
     scrollToBottom();
+}
+
+
+
+function createAttachmentsHtml(attachments) {
+    let html = '';
+    attachments.forEach(att => {
+        const fileUrl = att.file_url;
+        const filename = att.original_filename;
+        const attachmentType = att.attachment_type.toLowerCase();
+
+        html += `<div class="attachment-in-message">`;
+        if (attachmentType === 'image') {
+            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></a>`;
+        } else if (attachmentType === 'video') {
+            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
+        } else if (attachmentType === 'audio') {
+            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
+        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
+            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
+                        <span class="file-icon">📄</span>
+                        <span>${filename}</span>
+                     </a>`;
+        } else {
+            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
+                        <span class="file-icon">📄</span>
+                        <span>${filename}</span>
+                     </a>`;
+        }
+        html += `</div>`;
+    });
+    return `<div class="attachments">${html}</div>`;
 }
 
 // Funções de UI
@@ -1275,7 +1175,7 @@ function showError(message) {
     alert('Erro: ' + message);
 }
 
-// Funções de anexo e gravação (mantidas iguais)
+// Funções de anexo e gravação
 attachButton.addEventListener('click', () => attachmentInput.click());
 
 attachmentInput.addEventListener('change', (e) => {
@@ -1371,7 +1271,7 @@ recordAudioButton.addEventListener('click', async () => {
     }
 });
 
-// Envio de mensagem (agora async, com await no addMessageToLog)
+// Envio de mensagem
 async function sendMessage() {
     const msg = chatInput.value.trim();
     if (msg === '' && attachedFiles.length === 0) return;
@@ -1389,8 +1289,8 @@ async function sendMessage() {
         attachment_type: file.type.split('/')[0]
     }));
 
-    // 🔹 Exibir mensagem local imediatamente (com preview local, sem check)
-    await addMessageToLog({
+    // 🔹 Exibir mensagem local imediatamente
+    addMessageToLog({
         temp_id: tempId,
         author: username,
         content: msg, // Usar 'content' para consistência
@@ -1458,9 +1358,9 @@ chatInput.addEventListener('keypress', function(e) {
 });
 
 
-// Inicialização (agora com await no fetch)
-document.addEventListener('DOMContentLoaded', async function() {
-    await fetchMessageHistory();
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    fetchMessageHistory();
     chatInput.focus();
 
     chatRoomList.addEventListener('click', function(event) {

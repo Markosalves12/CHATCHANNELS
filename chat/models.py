@@ -72,6 +72,7 @@ class ChatRoom(models.Model):
         return [
             {
                 'user': membership.user.username,
+                'status': membership.user.status,
                 'added_by': membership.added_by.username,
                 'joined_at': membership.joined_at,
                 'is_creator': membership.user == self.created_by
@@ -128,6 +129,7 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     read_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='read_messages', blank=True)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.author.username}: {self.content[:50]}'

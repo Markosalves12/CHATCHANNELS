@@ -4,10 +4,10 @@ from django.http import JsonResponse
 from chat.models import Message
 from attachments.models import Attachment
 from django.db.models import Q
-from django.shortcuts import redirect
 from chat.models import ChatRoom
+import mimetypes
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-
 
 @login_required
 def get_unread_count(request, id_random=None):
@@ -69,28 +69,137 @@ def get_message_history(request, id_random):
     """
     try:
         room = ChatRoom.objects.get(id_random=id_random)
-        messages = Message.objects.filter(room=room).order_by('timestamp').select_related('author')
+        messages = (
+            Message.objects.filter(room=room)
+            .order_by("timestamp")
+            .select_related("author")
+        )
 
         history = []
         for msg in messages:
             attachments_data = []
-            # Supondo que você tenha um related_name 'attachments' no seu modelo Message
             for att in msg.attachments.all():
+                # Detecta tipo do anexo
+                mime, _ = mimetypes.guess_type(att.file.name)
+                if mime:
+                    attachment_type = mime.split("/")[0]  # "image", "video", "audio", "application"
+                    # tratar pdf como "pdf"
+                    if mime == "application/pdf":
+                        attachment_type = "pdf"
+                else:
+                    attachment_type = "document"
+
                 attachments_data.append({
-                    'file': att.file.url,
-                    'original_filename': att.original_filename,
+                    "file_url": att.file.url,
+                    "original_filename": att.original_filename,
+                    "attachment_type": attachment_type,
                 })
 
             history.append({
-                'message_id': msg.id,
-                'author': msg.author.username,
-                'message': msg.content,
-                'timestamp': msg.timestamp.isoformat(),
-                'is_system_message': msg.is_system_message,
-                'attachments': attachments_data,
+                "message_id": msg.id,
+                "author": msg.author.username,
+                "message": msg.content,
+                "timestamp": msg.timestamp.isoformat(),
+                # "is_system_message": msg.is_system_message,
+                "attachments": attachments_data,
             })
 
         return JsonResponse(history, safe=False)
 
     except ChatRoom.DoesNotExist:
-        return JsonResponse({'error': 'Sala não encontrada'}, status=404)
+        return JsonResponse({"error": "Sala não encontrada"}, status=404)
+
+
+
+
+@login_required
+@require_POST
+def delete_message(request, message_id):
+    try:
+        message = Message.objects.get(id=message_id, author=request.user)
+        message.is_deleted = True
+        message.save()
+        # Broadcast via WS (chame o consumer ou use channel layer)
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{message.room.id_random}",
+            {
+                "type": "chat.message.deleted",
+                "message_id": message.id,
+            }
+        )
+        return JsonResponse({"success": True})
+    except Message.DoesNotExist:
+        return JsonResponse({"error": "Mensagem não encontrada ou não é sua"}, status=403)
+
+@login_required
+@require_POST
+def edit_message(request, message_id):
+    try:
+        data = json.loads(request.body)
+        message = Message.objects.get(id=message_id, author=request.user)
+        if not message.is_deleted:
+            message.content = data.get('content', message.content)
+            message.save()
+            # Remover anexos específicos se enviados IDs pra delete
+            attachments_to_delete = data.get('attachments_to_delete', [])
+            Attachment.objects.filter(id__in=attachments_to_delete, message=message).delete()
+            # Adicionar novos anexos? (Se quiser, handle files aqui, mas pra simplicidade, assuma que edição só texto + remove anexos; novos via resend)
+            # Broadcast
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{message.room.id_random}",
+                {
+                    "type": "chat.message.updated",
+                    "message_id": message.id,
+                    "content": message.content,
+                    "attachments": [  # Envie lista atualizada
+                        {
+                            "file_url": att.file.url,
+                            "original_filename": att.original_filename,
+                            "attachment_type": mimetypes.guess_type(att.file.name)[0].split("/")[0] if mimetypes.guess_type(att.file.name)[0] else "document",
+                        } for att in message.attachments.all()
+                    ],
+                    "timestamp": message.timestamp.isoformat(),
+                }
+            )
+            return JsonResponse({"success": True})
+    except Message.DoesNotExist:
+        return JsonResponse({"error": "Mensagem não encontrada ou não é sua"}, status=403)
+
+@login_required
+@require_POST
+def delete_attachment(request, attachment_id):
+    try:
+        attachment = Attachment.objects.get(id=attachment_id)
+        if attachment.message.author != request.user:
+            return JsonResponse({"error": "Não autorizado"}, status=403)
+        attachment.delete()
+        # Broadcast update da mensagem
+        message = attachment.message
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{message.room.id_random}",
+            {
+                "type": "chat.message.updated",
+                "message_id": message.id,
+                "content": message.content,
+                "attachments": [  # Lista atualizada
+                    {
+                        "file_url": att.file.url,
+                        "original_filename": att.original_filename,
+                        "attachment_type": mimetypes.guess_type(att.file.name)[0].split("/")[0] if mimetypes.guess_type(att.file.name)[0] else "document",
+                    } for att in message.attachments.all()
+                ],
+                "timestamp": message.timestamp.isoformat(),
+            }
+        )
+        return JsonResponse({"success": True})
+    except Attachment.DoesNotExist:
+        return JsonResponse({"error": "Anexo não encontrado"}, status=404)

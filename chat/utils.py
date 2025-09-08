@@ -54,11 +54,11 @@ def get_room_members_context(request):
     ou um dicionário vazio se não estiver em uma página de chat.
     """
     context = {}
-    room_name = request.resolver_match.kwargs.get('room_name')
+    id_random = request.resolver_match.kwargs.get('id_random')
 
-    if room_name:
+    if id_random:
         try:
-            room = get_object_or_404(ChatRoom, name=room_name)
+            room = get_object_or_404(ChatRoom, id_random=id_random)
 
             if room.can_user_access(request.user):
                 members_info = room.get_members_info()
