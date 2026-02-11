@@ -36,8 +36,8 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     'https://chat.zeladorx.com.br',
     'https://www.chat.zeladorx.com.br',
-    'https://zeladorchat-ddeff2c19535.herokuapp.com',  # temporário durante migração
-    'https://*.herokuapp.com',        # wildcard para Heroku (útil agora)
+    'https://zeladorx.com.br',
+    'https://www.zeladorx.com.br',
 ]
 
 # Configs extras recomendadas para Heroku (evita problemas com proxy/SSL)
