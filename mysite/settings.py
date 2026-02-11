@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -114,9 +114,9 @@ CHANNEL_LAYERS = {
 
 # Replace the DATABASES section of your settings.py with this
 if DEBUG:
-    tmpPostgres = urlparse(os.getenv("DATABASE_URL_DEV"))
-else:
     tmpPostgres = urlparse(os.getenv("DATABASE_URL_PROD"))
+else:
+    tmpPostgres = urlparse(os.getenv("DATABASE_URL_DEV"))
 
 
 DATABASES = {
