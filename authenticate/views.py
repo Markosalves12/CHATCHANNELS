@@ -12,7 +12,6 @@ from django.contrib.auth import authenticate, login, logout
 
 
 
-@csrf_protect
 def login_view(request):
     context = {}
 
