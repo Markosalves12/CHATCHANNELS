@@ -30,12 +30,7 @@ SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    'chat.zeladorx.com.br',
-    'www.chat.zeladorx.com.br',
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = ['*']
 
 # CSRF trusted origins (com scheme https:// obrigatório!)
 CSRF_TRUSTED_ORIGINS = [
