@@ -6,19 +6,17 @@ from chat.models import Message
 from django.db.models import Count, Q
 from .utils import get_user_chat_rooms_data
 from django.shortcuts import render, redirect
-from gerente.models import Gerente
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import CreateRoomForm
 from .models import ChatRoom
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from attachments.models import Attachment
 from gerente.models import Gerente
-from empresasecundario.utils import define_empresas
 
-@login_required
 def chat_home(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Página inicial do chat - lista todas as salas disponíveis"""
     # Obter todas as salas públicas + salas privadas onde o usuário é membro
     chat_rooms = ChatRoom.objects.filter(
@@ -59,8 +57,10 @@ def chat_home(request):
     return render(request, 'home.html', context)
 
 
-@login_required
 def chat_room(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """
     Renderiza a página de uma sala de chat.
     A view foi simplificada para apenas verificar o acesso e renderizar o template base.
@@ -101,8 +101,10 @@ def chat_room(request, id_random):
     return render(request, 'room.html', context)
 
 
-@login_required
 def create_room(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Cria uma nova sala de chat com participantes"""
     if request.method == 'POST':
         form = CreateRoomForm(request.POST, request=request)
@@ -195,8 +197,10 @@ def create_room(request):
     })
 
 
-@login_required
 def edit_room(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Edita uma sala de chat."""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -283,8 +287,10 @@ def edit_room(request, id_random):
     return render(request, 'edit_room.html', {'form': form, 'room': room})
 
 
-@login_required
 def room_members(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna informações dos membros da sala"""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -303,8 +309,10 @@ def room_members(request, id_random):
     })
 
 
-@login_required
 def add_member_to_room(request, id_random, username):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Adiciona um membro à sala privada"""
     room = get_object_or_404(ChatRoom, name=id_random)
 
@@ -330,8 +338,10 @@ def add_member_to_room(request, id_random, username):
     })
 
 
-@login_required
 def remove_member_from_room(request, id_random, username):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Remove um membro da sala privada"""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -357,8 +367,10 @@ def remove_member_from_room(request, id_random, username):
     })
 
 
-@login_required
 def get_room_members(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna os membros de uma sala privada"""
     room = get_object_or_404(ChatRoom, name=id_random)
 
@@ -384,8 +396,10 @@ def get_room_members(request, id_random):
     return JsonResponse({'members': members_list})
 
 
-@login_required
 def delete_room(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Deleta uma sala e redireciona todos os usuários para a home do chat."""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -422,8 +436,10 @@ def delete_room(request, id_random):
     return redirect('chat_home')
 
 
-@login_required
 def leave_room(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Usuário sai de uma sala privada."""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -496,8 +512,10 @@ def leave_room(request, id_random):
     return redirect('chat_home')
 
 
-@login_required
 def mark_all_as_read(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Marca todas as mensagens não lidas como lidas"""
     room = get_object_or_404(ChatRoom, name=id_random)
 
@@ -559,8 +577,10 @@ def get_message_history(request, id_random):
         return JsonResponse({'error': 'Sala não encontrada'}, status=404)
 
 
-@login_required
 def room_stats(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna estatísticas da sala em tempo real"""
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         room = get_object_or_404(ChatRoom, id_random=id_random)
@@ -597,8 +617,10 @@ def room_stats(request, id_random):
 
 
 
-@login_required
 def search_users(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Busca usuários para adicionar à sala"""
     query = request.GET.get('q', '')
 
@@ -616,8 +638,10 @@ def search_users(request):
     return JsonResponse({'users': list(users)})
 
 
-@login_required
 def user_activity(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna a atividade recente dos usuários"""
     # Últimos usuários ativos (últimos 5 minutos)
     five_minutes_ago = timezone.now() - timezone.timedelta(minutes=5)
@@ -628,8 +652,10 @@ def user_activity(request):
     return JsonResponse({'active_users': list(active_users)})
 
 
-@login_required
 def get_available_users(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna usuários disponíveis para adicionar à sala (API)"""
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         search_term = request.GET.get('q', '')

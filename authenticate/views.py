@@ -13,10 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 
 
 def login_view(request):
-    context = {}
-
-    user = request.user
-    if user.is_authenticated:
+    if request.user.is_authenticated:
         return redirect('chat_home')
 
     if request.POST:
@@ -33,12 +30,11 @@ def login_view(request):
     else:
         form = LoginForms()
 
-    context['login_form'] = form
     return render(
         request,
         'login.html',
         context={
-            'form': LoginForms
+            'form': form
         }
     )
 

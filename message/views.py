@@ -1,5 +1,6 @@
 # chat/views.py
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from chat.models import Message
 from attachments.models import Attachment
@@ -7,10 +8,11 @@ from django.db.models import Q
 from chat.models import ChatRoom
 import mimetypes
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
 
-@login_required
 def get_unread_count(request, id_random=None):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Retorna a contagem de mensagens não lidas"""
     if id_random:
         # Contagem para uma sala específica
@@ -34,8 +36,10 @@ def get_unread_count(request, id_random=None):
 
         return JsonResponse({'total_unread': total_unread})
 
-@login_required
 def mark_all_as_read(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """Marca todas as mensagens não lidas como lidas"""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
@@ -64,6 +68,9 @@ def mark_all_as_read(request, id_random):
 
 
 def get_message_history(request, id_random):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     """
     View de API para retornar o histórico de mensagens de uma sala em JSON.
     """
@@ -113,9 +120,11 @@ def get_message_history(request, id_random):
 
 
 
-@login_required
 @require_POST
 def delete_message(request, message_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     try:
         message = Message.objects.get(id=message_id, author=request.user)
         message.is_deleted = True
@@ -135,9 +144,11 @@ def delete_message(request, message_id):
     except Message.DoesNotExist:
         return JsonResponse({"error": "Mensagem não encontrada ou não é sua"}, status=403)
 
-@login_required
 @require_POST
 def edit_message(request, message_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     try:
         data = json.loads(request.body)
         message = Message.objects.get(id=message_id, author=request.user)
@@ -172,9 +183,12 @@ def edit_message(request, message_id):
     except Message.DoesNotExist:
         return JsonResponse({"error": "Mensagem não encontrada ou não é sua"}, status=403)
 
-@login_required
+
 @require_POST
 def delete_attachment(request, attachment_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     try:
         attachment = Attachment.objects.get(id=attachment_id)
         if attachment.message.author != request.user:
