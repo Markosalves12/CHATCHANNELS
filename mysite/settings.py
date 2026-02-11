@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+from google.oauth2 import service_account
 
 load_dotenv()
 
@@ -26,9 +28,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = 'gerente.Gerente'
 AUTHENTICATION_BACKENDS = (
@@ -110,29 +112,24 @@ CHANNEL_LAYERS = {
 }
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
+# Replace the DATABASES section of your settings.py with this
+if DEBUG:
+    tmpPostgres = urlparse(os.getenv("DATABASE_URL_DEV"))
+else:
+    tmpPostgres = urlparse(os.getenv("DATABASE_URL_PROD"))
 
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'zeladorxv2',  # Nome do seu banco de dados
-        'USER': 'postgresv2',  # Nome do usuário
-        'PASSWORD': 'zeladorxv2',  # Senha em branco se não houver senha
-        'HOST': 'localhost',  # O banco de dados está na mesma máquina
-        'PORT': '5432',  # Porta padrão do PostgreSQL
+        'NAME': tmpPostgres.path.replace('/', ''),
+        'USER': tmpPostgres.username,
+        'PASSWORD': tmpPostgres.password,
+        'HOST': tmpPostgres.hostname,
+        'PORT': 5432,
+        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -165,13 +162,14 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 STATICFILES_DIRS = [
     os.path.join(
-        BASE_DIR, 'mysite/static'
+        BASE_DIR, 'setup/static'
     )
 ]
 
@@ -179,14 +177,29 @@ STATIC_ROOT = os.path.join(
     BASE_DIR, 'static'
 )
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+STATIC_URL = 'static/'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        "OPTIONS": {
+            "bucket_name": "production_zeladorchat",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        "OPTIONS": {
+            "bucket_name": "production_zeladorchat",  # Nome do seu bucket
+            "location": "static",  # Diretório dentro do bucket para os arquivos estáticos
+        },
+    },
+}
 
+GS_PROJECT_ID = "bucketzeladorx"
 
-# URL base para acessar arquivos de mídia no navegador
-MEDIA_URL = '/media/'
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "bucketzeladorx-047b955782da.json")
+)
 
-# Caminho absoluto no sistema de arquivos para salvar os arquivos de mídia
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = f"https://storage.googleapis.com/{STORAGES['default']['OPTIONS']['bucket_name']}/media/"

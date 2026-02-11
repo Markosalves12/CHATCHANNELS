@@ -458,7 +458,7 @@ def leave_room(request, id_random):
 
         # Notificar a sala que o usuário saiu
         async_to_sync(channel_layer.group_send)(
-            f"chat_{room.name}",
+            f"chat_{room.id_random}",
             {
                 "type": "user_left",  # Isso chama o método user_left no consumer
                 "username": request.user.username,

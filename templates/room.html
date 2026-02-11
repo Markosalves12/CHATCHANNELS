@@ -1,7 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat Room</title>
 <style>
 /* Reset box-sizing para uma renderização mais previsível */
@@ -548,20 +551,26 @@ body {
 }
 
 .members-list {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
 }
 
 .members-list li {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid #ddd;
 }
 
 .members-list li:last-child {
     border-bottom: none;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .online-status {
@@ -578,12 +587,9 @@ body {
 }
 
 .tag {
-    font-size: 12px;
-    background-color: #ddd;
-    color: #555;
     padding: 2px 6px;
     border-radius: 4px;
-    margin-left: 5px;
+    font-size: 0.85em;
 }
 
 #chat-log-container::-webkit-scrollbar {
@@ -738,6 +744,16 @@ body {
     font-size: 1.2em;
 }
 
+.status-mobilizado {
+    background-color: #d4edda; /* verde fraquinho */
+    color: #155724;
+}
+
+.status-desmobilizado {
+    background-color: #fff3cd; /* amarelo fraquinho */
+    color: #856404;
+}
+
 </style>
 </head>
 <body>
@@ -836,22 +852,29 @@ body {
             <ul class="members-list">
                 {% for member in current_room_members.members %}
                 <li>
-                    <span>{{ member.user }}</span>
-                    {% if member.user == current_room_members.created_by %}
-                    <span class="tag">{{ member.user }} (criador)</span>
-                    {% endif %}
-                    <span class="online-status {% if member.is_online %}online{% endif %}"></span>
-                    {% if request.user == current_room_members.created_by and member.username != current_room_members.created_by %}
-                    <button class="remove-member-btn" onclick="removeMember('{{ member.username }}')"
-                            style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                        Remover
-                    </button>
+                    <div class="member-info">
+                        <span>{{ member.user }}</span>
+                        {% if member.user == current_room_members.created_by %}
+                            <span class="tag">{{ member.user }} (criador)</span>
+                        {% endif %}
+                        <span class="online-status {% if member.is_online %}online{% endif %}"></span>
+                    </div>
+
+                    <span class="tag {% if member.status == 'Mobilizado' %}status-mobilizado{% elif member.status == 'Desmobilizado' %}status-desmobilizado{% endif %}">
+                        {{ member.status }}
+                    </span>
+
+                    {% if request.user == current_room_members.created_by %}
+                        <button class="remove-member-btn" onclick="removeMember('{{ member.username }}')"
+                                style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                            Remover
+                        </button>
                     {% endif %}
                 </li>
                 {% endfor %}
             </ul>
             <div style="margin-top: 16px; text-align: center; display: flex; justify-content: center; gap: 12px;">
-                {% if request.user != current_room_members.created_by %}
+                {% if member.user != current_room_members.created_by %}
                 <form method="POST" action="{% url 'leave_room' room.id_random %}">
                     {% csrf_token %}
                     <button type="submit"
@@ -861,7 +884,7 @@ body {
                 </form>
                 {% endif %}
 
-                {% if request.user != current_room_members.created_by %}
+                {% if member.user == current_room_members.created_by %}
                 <button type="button"
                     onclick="openDeleteModal()"
                     style="background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">

@@ -71,6 +71,7 @@ class ChatRoom(models.Model):
         memberships = RoomMembership.objects.filter(room=self).select_related('user', 'added_by')
         return [
             {
+                'id': membership.user.id,
                 'user': membership.user.username,
                 'status': membership.user.status,
                 'added_by': membership.added_by.username,

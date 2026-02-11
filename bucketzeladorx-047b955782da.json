@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "bucketzeladorx",
+  "private_key_id": "047b955782dae0bb65a8ba2107bb082753f08d57",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCZi2/G8DsH7iL9\nYr4MSh65AoIoXp5r8m/Ej5OAGWISdGPeWxNQqdH3A53vIqZSK+WOZXWfxXdwgR67\nYjdJ/ZfQFSKHaMvAkqQci14imCt+Tl3Q/2sHaskCunJ7Sm4guIoeD+hpG+vww1Jl\nND4pVSxTZA1UNN6H7svEr3qjIOl5JOQ3VO41ytUpibvM4utXmIH8gceEjeRo1cRa\nWNAom1/Zt2by2e4RFRdxwB/H3Bci3SKYML/8sa0hMzZiIF/zyVibh0mFvcZvi9cy\nzPrG/3IsUVAtwYZ5b8ocUMgYAZ03N81opyRHAl2g6ZjhmxOteMRtxI8cwNONJbLw\ncQUfPPOvAgMBAAECggEAKqWzD0OMceBv8YcqmElCDUsoEcRuJjd5WdQzOOJT/iI7\n1vfe/omcmwpzJIewQKSWpx2BNTZovWPvwEZAaxm3wAEOzSOLbFqOoKsJI3y2n+du\nYW2AMdg0KsDUqW/79LStEDqE6CTsPLxTt25yUZKptCPXG+tvX7ww9tlyq7qpfo8V\nWa+Wlq7w5J6Ws7t3TfC7TUwNLssjux289NvjKmri56+ECZdmXOsL1LGUeZmsoFkT\nAwXGwTYJWcL0+H2a7b4uxf/3bfIvy2OVja6fu0SfIWSWD+9SUwDHHgAb4TZ+YBAL\nWjDeCLujJDdvlc75VVUb7zRq85Cz0Kr6RW0oidusOQKBgQDQgD14JZa5zlKuz/ne\nz7s1z2v6aUpMUxtazzx6SkG7g6xHyMLH6QaFl8ynkQuv6eI6RNAu7zGrnSDrQhwt\ngcjaC1YJCN8TLDBlwgu8I3OZ8KfU9BAvlRbxkNEHbTUmby8BlGEAUgtn2wcVCS05\nBoRl5qsuGGX1gAAGKnarRDbJEwKBgQC8hiawLzTUfvU+F/PLBEVLapD6R/CKgogi\nQragg5GcT9JHzoe3Adq4gHj5HmIrXhWJ+LZJmH5hdfJ/1+BCNKs/X3OZFvwDMU7p\nywpwovNcgEvlSSvfP4xUwgU/AptNqmV70WbkNk8SA8jk1rg02hVqPQHOYDzHq8Jx\nYIRX/CB6dQKBgDhiZb0nFSK8TBngPmdl7++2XzIB5UjMtLoTDvzXNf16t01WWm5r\ncwsPqRWroOh6rGYrk80NfHY3cN6OK0aXMXTd2e9picIKkjACkN/ZCnsX3Js3QWVM\nwT6kdhK3EseJC8I2mSDYDyOP1NN4ftVMEOPpxGMbz/7bFaaVNzBLqzEnAoGAPLmh\ngKLUC5aRfFzOxJgtketTo6rEinkdTJvco7t9jbIQc9zMzmAkicWoMeZdjMaTfYvF\ne9NI8i/B2vg4XlsExjcCz08eAhFB8ADc7gcvCJ6y07pMDW80zqBofDFkwRGf+tAq\nqlvsAEuDzGJ1l2CgAUaBbG6HZXGoAkkqmAS4mXkCgYAjTthtj1VKAg0CSrHI/gJM\nCblRxRCJM1Iax8kTPm9RyL7qlvLsZP8zCHyAqVR4NqmeA1Bgt/QY09S9FEBf15Cx\nekVwGlxjeTgEcArRbMa7fksQmTGJeyL1sAdZi3xFTR4RaF9RaxZE7ez17ybCcLuR\nPDcxJO9e0CPUuwI28ZpjLA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "acesso-zeladorx@bucketzeladorx.iam.gserviceaccount.com",
+  "client_id": "103770442531356640626",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/acesso-zeladorx%40bucketzeladorx.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
