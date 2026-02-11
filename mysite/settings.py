@@ -30,12 +30,23 @@ SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'chat.zeladorx.com.br',
+    'www.chat.zeladorx.com.br',
+    '.zeladorx.com.br',               # wildcard para qualquer subdomínio
+    'zeladorchat-ddeff2c19535.herokuapp.com',  # temporário Heroku
+    '.herokuapp.com',                 # wildcard Heroku
+    'localhost',
+    '127.0.0.1',
+]
 
 # CSRF trusted origins (com scheme https:// obrigatório!)
 CSRF_TRUSTED_ORIGINS = [
-    'https://zeladorchat-ddeff2c19535.herokuapp.com',  # seu domínio exato
-    'https://*.herokuapp.com',                         # wildcard para Heroku (melhor opção)
+    'https://chat.zeladorx.com.br',
+    'https://www.chat.zeladorx.com.br',
+    'https://*.zeladorx.com.br',      # cobre todos os subdomínios de zeladorx.com.br
+    'https://zeladorchat-ddeff2c19535.herokuapp.com',  # temporário durante migração
+    'https://*.herokuapp.com',        # wildcard para Heroku (útil agora)
 ]
 
 # Configs extras recomendadas para Heroku (evita problemas com proxy/SSL)
