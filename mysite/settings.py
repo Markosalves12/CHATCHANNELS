@@ -32,6 +32,18 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF trusted origins (com scheme https:// obrigatório!)
+CSRF_TRUSTED_ORIGINS = [
+    'https://zeladorchat-ddeff2c19535.herokuapp.com',  # seu domínio exato
+    'https://*.herokuapp.com',                         # wildcard para Heroku (melhor opção)
+]
+
+# Configs extras recomendadas para Heroku (evita problemas com proxy/SSL)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True  # força https
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
 AUTH_USER_MODEL = 'gerente.Gerente'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.AllowAllUsersModelBackend',
