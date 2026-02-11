@@ -33,9 +33,6 @@ DEBUG = False
 ALLOWED_HOSTS = [
     'chat.zeladorx.com.br',
     'www.chat.zeladorx.com.br',
-    '.zeladorx.com.br',               # wildcard para qualquer subdomínio
-    'zeladorchat-ddeff2c19535.herokuapp.com',  # temporário Heroku
-    '.herokuapp.com',                 # wildcard Heroku
     'localhost',
     '127.0.0.1',
 ]
@@ -44,7 +41,6 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://chat.zeladorx.com.br',
     'https://www.chat.zeladorx.com.br',
-    'https://*.zeladorx.com.br',      # cobre todos os subdomínios de zeladorx.com.br
     'https://zeladorchat-ddeff2c19535.herokuapp.com',  # temporário durante migração
     'https://*.herokuapp.com',        # wildcard para Heroku (útil agora)
 ]
