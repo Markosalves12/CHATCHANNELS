@@ -7,6 +7,9 @@ const chatRoomList = document.getElementById('chat-room-list');
 const markAsReadButton = document.getElementById('mark-as-read-button');
 const roomSearch = document.getElementById('room-search');
 const noResults = document.getElementById('no-results');
+const openSidebarButton = document.getElementById('open-sidebar');
+const closeSidebarButton = document.getElementById('close-sidebar');
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
 
 // Modal
 const membersButton = document.getElementById('members-button');
@@ -163,10 +166,12 @@ chatSocket.onmessage = function(e) {
 
 chatSocket.onopen = function() {
     console.log('Conexão WebSocket estabelecida');
+    chatApp.classList.add('is-connected');
 };
 
 chatSocket.onclose = function() {
     console.log('Conexão WebSocket fechada');
+    chatApp.classList.remove('is-connected');
 };
 
 chatSocket.onerror = function(error) {
@@ -374,9 +379,27 @@ function renderSidebar(roomData) {
         if (room.id_random === roomIdRandom) {
             roomLink.classList.add('active');
         }
-        roomLink.innerHTML = `<span class="room-name">${room.name}</span>`;
+        const avatar = document.createElement('span');
+        avatar.className = 'conversation-avatar';
+        avatar.textContent = (room.name || '?').charAt(0).toUpperCase();
+
+        const copy = document.createElement('span');
+        copy.className = 'conversation-copy';
+        const roomNameElement = document.createElement('span');
+        roomNameElement.className = 'room-name';
+        roomNameElement.textContent = room.name;
+        const roomMeta = document.createElement('span');
+        roomMeta.className = 'conversation-meta';
+        roomMeta.textContent = room.is_private ? 'Conversa privada' : 'Espaço da equipe';
+        copy.appendChild(roomNameElement);
+        copy.appendChild(roomMeta);
+        roomLink.appendChild(avatar);
+        roomLink.appendChild(copy);
         if (room.unread_count > 0) {
-            roomLink.innerHTML += `<span class="unread-count">${room.unread_count}</span>`;
+            const unread = document.createElement('span');
+            unread.className = 'unread-count';
+            unread.textContent = room.unread_count;
+            roomLink.appendChild(unread);
         }
         chatRoomList.appendChild(roomLink);
     });
@@ -597,6 +620,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 });
+
+function setSidebarOpen(isOpen) {
+    document.body.classList.toggle('sidebar-open', isOpen);
+}
+
+if (openSidebarButton) openSidebarButton.addEventListener('click', () => setSidebarOpen(true));
+if (closeSidebarButton) closeSidebarButton.addEventListener('click', () => setSidebarOpen(false));
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
 
 // Navegação por teclado
 document.addEventListener('keydown', (e) => {

@@ -3,177 +3,182 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ room_name }} | Zelador Chat</title>
-<link rel="stylesheet" href="{% static 'chat/room.css' %}">
-
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
+    <title>{{ room_name }} | Zelador Chat</title>
+    <link rel="stylesheet" href="/{% static 'chat/room.css' %}?v=2">
 </head>
 <body id="chat-app" data-room-id="{{ id_random }}" data-room-name="{{ room_name|escape }}" data-username="{{ request.user.username|escape }}" data-user-id="{{ request.user.id }}" data-history-enabled="{{ room.history_enabled|yesno:'true,false' }}">
-
-<aside id="sidebar" aria-label="Salas de conversa">
-    <div class="sidebar-header">
-        <h3>Zelador Chat</h3>
-        <div class="search-container">
-            <input type="text" id="room-search" placeholder="Buscar salas...">
-        </div>
-        <a href="{% url 'create_room' %}" class="create-room-btn">+ Nova Sala</a>
-    </div>
-
-    <div class="rooms-container">
-        <div class="rooms-scrollable" id="chat-room-list">
-            {% for room in chat_rooms %}
-            <a href="{% url 'chat_room' room.id_random %}" class="chat-room-item {% if room.id_random == id_random %}active{% endif %}" data-room-name="{{ room.name }}">
-                <span class="room-name">{{ room.name }}</span>
-                {% if room.unread_count > 0 %}
-                <span class="unread-count">{{ room.unread_count }}</span>
-                {% endif %}
-            </a>
-            {% empty %}
-            <div class="no-rooms">
-                Nenhuma sala disponível
-            </div>
-            {% endfor %}
-            <div class="no-results" id="no-results">
-                Nenhuma sala encontrada
-            </div>
-        </div>
-    </div>
-
-    <div class="sidebar-footer">
-        <a href="{% url 'chat_home' %}" class="home-link">🏠 Página Inicial</a>
-    </div>
-</aside>
-
-<main id="chat-area">
-    <div id="chat-header">
-        <div id="room-info">
-            <span id="room-name">{{ room_name }}</span>
-            <span class="room-type-badge">
-                {% if room.is_private %}🔒 Privada{% else %}🌐 Pública{% endif %}
-            </span>
-            <span class="history-badge {% if room.history_enabled %}enabled{% endif %}">
-                {% if room.history_enabled %}Histórico disponível{% else %}Conversa desta sessão{% endif %}
-            </span>
-            {% if current_room_members %}
-            <button id="members-button" class="members-button">
-                👥 {{ current_room_members.total_members }} Membro{{ current_room_members.total_members|pluralize }}
-            </button>
-            {% endif %}
-        </div>
-        <div id="header-actions">
-            <a href="{% url 'chat_home' %}" class="home-link-chat">🏠 Início</a>
-            <button id="mark-as-read-button" onclick="markMessagesAsRead()">
-                ✅ Marcar como lidas
-            </button>
-            {% if room.created_by == request.user or request.user.is_admin %}
-                <a href="{% url 'edit_room' id_random=room.id_random %}" class="home-link-chat">
-                    ✏️ Editar Sala
+    <div class="app-shell">
+        <aside id="sidebar" aria-label="Navegação do chat">
+            <div class="brand-row">
+                <a href="{% url 'chat_home' %}" class="brand" aria-label="Zelador Chat, início">
+                    <span class="brand-mark" aria-hidden="true">Z</span>
+                    <span>Zelador Chat</span>
                 </a>
-            {% endif %}
-            <a class="home-link-chat">
-                    {{ user.username }} | {{ user.email }}
-            </a>
-        </div>
+                <button id="close-sidebar" class="icon-button mobile-only" type="button" aria-label="Fechar menu">×</button>
+            </div>
+
+            <div class="sidebar-actions">
+                <a href="{% url 'create_room' %}" class="primary-action">
+                    <span aria-hidden="true">＋</span>
+                    Nova conversa
+                </a>
+                <label class="search-field" for="room-search">
+                    <span aria-hidden="true">⌕</span>
+                    <input type="search" id="room-search" placeholder="Pesquisar conversas" autocomplete="off">
+                </label>
+            </div>
+
+            <nav class="sidebar-scroll">
+                <section class="nav-section" aria-labelledby="conversations-title">
+                    <div class="section-heading">
+                        <h2 id="conversations-title">Conversas</h2>
+                        <span>{{ chat_rooms|length }}</span>
+                    </div>
+                    <div id="chat-room-list" class="conversation-list">
+                        {% for chat_room in chat_rooms %}
+                        <a href="{% url 'chat_room' chat_room.id_random %}" class="chat-room-item {% if chat_room.id_random == id_random %}active{% endif %}" data-room-name="{{ chat_room.name }}">
+                            <span class="conversation-avatar">{{ chat_room.name|first|upper }}</span>
+                            <span class="conversation-copy">
+                                <span class="room-name">{{ chat_room.name }}</span>
+                                <span class="conversation-meta">{% if chat_room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}</span>
+                            </span>
+                            {% if chat_room.unread_count > 0 %}<span class="unread-count">{{ chat_room.unread_count }}</span>{% endif %}
+                        </a>
+                        {% empty %}<p class="no-rooms">Nenhuma conversa disponível.</p>{% endfor %}
+                        <p class="no-results" id="no-results">Nenhuma conversa encontrada.</p>
+                    </div>
+                </section>
+
+                {% if current_room_members %}
+                <section class="nav-section people-section" aria-labelledby="people-title">
+                    <div class="section-heading">
+                        <h2 id="people-title">Pessoas</h2>
+                        <span>{{ current_room_members.total_members }}</span>
+                    </div>
+                    <div class="people-list">
+                        {% for member in current_room_members.members %}
+                        <button class="person-row" type="button" onclick="openMembersModal()">
+                            <span class="person-avatar">{{ member.user|first|upper }}</span>
+                            <span class="person-copy">
+                                <strong>{{ member.user }}</strong>
+                                <small>{% if member.user == current_room_members.created_by %}Criador da conversa{% else %}{{ member.status }}{% endif %}</small>
+                            </span>
+                            <span class="presence-dot {% if member.is_online %}online{% endif %}" title="{% if member.is_online %}Online{% else %}Offline{% endif %}"></span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </nav>
+
+            <div class="account-row">
+                <span class="person-avatar account-avatar">{{ user.username|first|upper }}</span>
+                <span class="account-copy"><strong>{{ user.username }}</strong><small>{{ user.email }}</small></span>
+                <a href="{% url 'chat_home' %}" class="icon-button" title="Página inicial" aria-label="Página inicial">⌂</a>
+            </div>
+        </aside>
+
+        <main id="chat-area">
+            <header id="chat-header">
+                <button id="open-sidebar" class="icon-button mobile-only" type="button" aria-label="Abrir conversas">☰</button>
+                <div class="room-avatar">{{ room_name|first|upper }}</div>
+                <div id="room-info">
+                    <div class="room-title-row">
+                        <h1 id="room-name">{{ room_name }}</h1>
+                        <span class="presence-dot online" aria-label="Conectado"></span>
+                    </div>
+                    <p>
+                        {% if room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}
+                        <span aria-hidden="true">•</span>
+                        {% if room.history_enabled %}Histórico disponível{% else %}Somente esta sessão{% endif %}
+                    </p>
+                </div>
+                <div id="header-actions">
+                    <button id="mark-as-read-button" class="header-button" type="button" onclick="markMessagesAsRead()" title="Marcar mensagens como lidas">
+                        <span aria-hidden="true">✓</span><span class="action-label">Marcar como lidas</span>
+                    </button>
+                    {% if current_room_members %}
+                    <button id="members-button" class="header-button" type="button" title="Ver participantes">
+                        <span aria-hidden="true">♙</span><span class="action-label">{{ current_room_members.total_members }}</span>
+                    </button>
+                    {% endif %}
+                    {% if room.created_by == request.user or request.user.is_admin %}
+                    <a href="{% url 'edit_room' id_random=room.id_random %}" class="header-button" title="Configurar conversa">
+                        <span aria-hidden="true">⚙</span><span class="action-label">Configurar</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <div class="history-notice {% if room.history_enabled %}enabled{% endif %}">
+                <span aria-hidden="true">{% if room.history_enabled %}◷{% else %}◉{% endif %}</span>
+                {% if room.history_enabled %}As 50 mensagens mais recentes estão disponíveis.{% else %}O histórico está desativado. Você verá apenas mensagens recebidas nesta sessão.{% endif %}
+            </div>
+
+            <div id="chat-log-container" role="log" aria-live="polite" aria-label="Mensagens da sala">
+                <div class="conversation-state"><span class="loading-dot"></span> Entrando na conversa...</div>
+            </div>
+
+            <div id="chat-input-container">
+                <div id="attachment-preview-container" class="attachment-preview" hidden></div>
+                <div class="composer-shell">
+                    <input id="attachment-input" type="file" multiple hidden>
+                    <div class="input-row">
+                        <button id="attach-button" class="chat-input-button" type="button" aria-label="Anexar arquivo" title="Anexar arquivo">⌕</button>
+                        <button id="record-audio-button" class="chat-input-button" type="button" aria-label="Gravar áudio" title="Gravar áudio">●</button>
+                        <input id="chat-message-input" type="text" placeholder="Enviar mensagem para {{ room_name }}" autocomplete="off" aria-label="Mensagem">
+                        <button id="chat-message-submit" class="chat-input-button send-button" type="button" aria-label="Enviar mensagem" title="Enviar mensagem">➤</button>
+                    </div>
+                    <p class="composer-hint">Enter para enviar</p>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!--
-      ÁREA MODIFICADA: O loop de mensagens do Django foi removido.
-      O container agora começa vazio e será preenchido pelo JavaScript.
-    -->
-    <div id="chat-log-container" role="log" aria-live="polite" aria-label="Mensagens da sala">
-        <div class="conversation-state">Entrando na conversa...</div>
-    </div>
-
-    <div id="chat-input-container">
-        <div id="attachment-preview-container" class="attachment-preview" hidden></div>
-        <div class="input-row">
-            <input id="attachment-input" type="file" multiple style="display: none;">
-            <button id="attach-button" class="chat-input-button" type="button" aria-label="Anexar arquivo" title="Anexar arquivo">📎</button>
-            <button id="record-audio-button" class="chat-input-button" type="button" aria-label="Gravar áudio" title="Gravar áudio">🎙️</button>
-            <input id="chat-message-input" type="text" placeholder="Enviar mensagem para {{ room_name }}" autocomplete="off" aria-label="Mensagem">
-            <button id="chat-message-submit" class="chat-input-button send-button" type="button" aria-label="Enviar mensagem" title="Enviar mensagem">➤</button>
-        </div>
-    </div>
-</main>
-
-{% if current_room_members %}
-<div id="members-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-button" onclick="closeMembersModal()">&times;</span>
-        <h3>Gerenciar Membros da Sala</h3>
-
-        <div class="members-section">
-            <h4>Membros Atuais ({{ current_room_members.total_members }})</h4>
+    {% if current_room_members %}
+    <div id="members-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="members-modal-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div><span class="eyebrow">CONVERSA</span><h2 id="members-modal-title">Pessoas em {{ room.name }}</h2></div>
+                <button class="close-button icon-button" type="button" aria-label="Fechar">×</button>
+            </div>
             <ul class="members-list">
                 {% for member in current_room_members.members %}
                 <li>
-                    <div class="member-info">
-                        <span>{{ member.user }}</span>
-                        {% if member.user == current_room_members.created_by %}
-                            <span class="tag">{{ member.user }} (criador)</span>
-                        {% endif %}
-                        <span class="online-status {% if member.is_online %}online{% endif %}"></span>
-                    </div>
-
-                    <span class="tag {% if member.status == 'Mobilizado' %}status-mobilizado{% elif member.status == 'Desmobilizado' %}status-desmobilizado{% endif %}">
-                        {{ member.status }}
-                    </span>
-
-                    {% if request.user == current_room_members.created_by %}
-                        <button class="remove-member-btn" onclick="removeMember('{{ member.username }}')"
-                                style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                            Remover
-                        </button>
+                    <span class="person-avatar">{{ member.user|first|upper }}</span>
+                    <span class="member-info"><strong>{{ member.user }}</strong><small>{% if member.user == current_room_members.created_by %}Criador{% else %}{{ member.status }}{% endif %}</small></span>
+                    <span class="presence-dot {% if member.is_online %}online{% endif %}"></span>
+                    {% if request.user == current_room_members.created_by and member.user != current_room_members.created_by %}
+                    <button class="danger-text-button" type="button" onclick="removeMember('{{ member.username }}')">Remover</button>
                     {% endif %}
                 </li>
                 {% endfor %}
             </ul>
-            <div style="margin-top: 16px; text-align: center; display: flex; justify-content: center; gap: 12px;">
-                {% if member.user != current_room_members.created_by %}
-                <form method="POST" action="{% url 'leave_room' room.id_random %}">
-                    {% csrf_token %}
-                    <button type="submit"
-                        style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                        Sair da Sala
-                    </button>
-                </form>
+            <div class="modal-footer">
+                {% if request.user.username != current_room_members.created_by %}
+                <form method="POST" action="{% url 'leave_room' room.id_random %}">{% csrf_token %}<button type="submit" class="secondary-button danger">Sair da conversa</button></form>
                 {% endif %}
-
-                {% if member.user == current_room_members.created_by %}
-                <button type="button"
-                    onclick="openDeleteModal()"
-                    style="background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                    Excluir Sala
-                </button>
+                {% if request.user.username == current_room_members.created_by %}
+                <button type="button" class="secondary-button danger" onclick="openDeleteModal()">Excluir conversa</button>
                 {% endif %}
             </div>
         </div>
     </div>
-</div>
 
-<div id="deleteModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-           background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;">
-    <div style="background: white; padding: 20px; border-radius: 8px; width: 300px; text-align: center;">
-        <h3 style="margin-bottom: 12px;">Tem certeza?</h3>
-        <p style="margin-bottom: 20px;">Essa ação vai excluir a sala <b>{{ room.name }}</b> para todos os usuários.</p>
-        <form method="POST" action="{% url 'delete_room' room.name %}" style="display: flex; justify-content: space-between;">
-            {% csrf_token %}
-            <button type="button"
-                onclick="closeDeleteModal()"
-                style="background: #7f8c8d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                Cancelar
-            </button>
-            <button type="submit"
-                style="background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-                Confirmar
-            </button>
-        </form>
+    <div id="deleteModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <div class="modal-content compact-modal">
+            <div class="modal-header"><div><span class="eyebrow">ATENÇÃO</span><h2 id="delete-modal-title">Excluir conversa?</h2></div></div>
+            <p>Esta ação excluirá <strong>{{ room.name }}</strong> para todos os participantes.</p>
+            <form method="POST" action="{% url 'delete_room' room.name %}" class="modal-footer">{% csrf_token %}
+                <button type="button" class="secondary-button" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="submit" class="danger-button">Excluir</button>
+            </form>
+        </div>
     </div>
-</div>
-{% endif %}
-<script src="{% static 'chat/room.js' %}" defer></script>
-
+    {% endif %}
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <script src="/{% static 'chat/room.js' %}?v=2" defer></script>
 </body>
 </html>
