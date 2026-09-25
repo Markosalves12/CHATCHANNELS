@@ -7,6 +7,11 @@ class ChatRoom(models.Model):
     id_random = models.CharField(unique=True,default=generate_id_random,max_length=20)
     name = models.CharField(max_length=255)
     is_private = models.BooleanField(default=False)
+    history_enabled = models.BooleanField(
+        default=False,
+        verbose_name='Histórico habilitado',
+        help_text='Permite que participantes consultem mensagens anteriores ao entrarem na sala.'
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_rooms')
     created_at = models.DateTimeField(auto_now_add=True)
     members = models.ManyToManyField(

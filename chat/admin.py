@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 
 @admin.register(ChatRoom)
 class ChatRoomAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_private', 'created_by', 'created_at', 'member_count')
-    list_filter = ('is_private', 'created_at')
+    list_display = ('name', 'is_private', 'history_enabled', 'created_by', 'created_at', 'member_count')
+    list_filter = ('is_private', 'history_enabled', 'created_at')
     search_fields = ('name', 'created_by__username')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
@@ -19,7 +19,7 @@ class ChatRoomAdmin(admin.ModelAdmin):
     member_count.short_description = 'Número de Membros'
 
     # Ação para tornar uma sala pública ou privada
-    actions = ['make_public', 'make_private']
+    actions = ['make_public', 'make_private', 'enable_history', 'disable_history']
 
     def make_public(self, request, queryset):
         queryset.update(is_private=False)
@@ -30,6 +30,16 @@ class ChatRoomAdmin(admin.ModelAdmin):
         queryset.update(is_private=True)
         self.message_user(request, "As salas selecionadas foram tornadas privadas.")
     make_private.short_description = "Tornar salas privadas"
+
+    def enable_history(self, request, queryset):
+        queryset.update(history_enabled=True)
+        self.message_user(request, "O histórico foi habilitado nas salas selecionadas.")
+    enable_history.short_description = "Habilitar histórico"
+
+    def disable_history(self, request, queryset):
+        queryset.update(history_enabled=False)
+        self.message_user(request, "O histórico foi desabilitado nas salas selecionadas.")
+    disable_history.short_description = "Desabilitar histórico"
 
 
 @admin.register(RoomMembership)

@@ -204,7 +204,7 @@ def edit_room(request, id_random):
     """Edita uma sala de chat."""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
-    if room.created_by != request.user:
+    if room.created_by != request.user and not request.user.is_admin:
         messages.error(request, 'Você não tem permissão para editar esta sala.')
         return redirect('chat_room', id_random=room.id_random)
 

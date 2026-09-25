@@ -19,7 +19,7 @@ class CreateRoomForm(forms.ModelForm):
 
     class Meta:
         model = ChatRoom
-        fields = ['name', 'is_private', 'participants']
+        fields = ['name', 'is_private', 'history_enabled', 'participants']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -29,11 +29,16 @@ class CreateRoomForm(forms.ModelForm):
             'is_private': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
                 'id': 'id_is_private'
+            }),
+            'history_enabled': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_history_enabled'
             })
         }
         labels = {
             'name': 'Nome da Sala',
-            'is_private': 'Sala Privada'
+            'is_private': 'Sala Privada',
+            'history_enabled': 'Permitir histórico de mensagens'
         }
 
     def __init__(self, *args, **kwargs):
@@ -41,6 +46,10 @@ class CreateRoomForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.request and self.request.user.is_authenticated:
+            if not self.request.user.is_admin:
+                self.fields['history_enabled'].disabled = True
+                self.fields['history_enabled'].help_text = 'Somente administradores podem alterar esta configuração.'
+
             # 🔹 aplica filtro pelas empresas primárias e status
             empresas = define_empresas(request=self.request, userid=self.request.user.id_random)
             empresas_primarias_ids = empresas['empresas_primarias_ids']

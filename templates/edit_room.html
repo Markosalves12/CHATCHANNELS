@@ -355,6 +355,16 @@
                     </label>
                 </div>
 
+                <div class="form-check">
+                    {{ form.history_enabled }}
+                    <label for="{{ form.history_enabled.id_for_label }}" class="form-check-label">
+                        Permitir histórico de mensagens
+                        <small style="display: block; color: #666; margin-top: 4px;">
+                            Quando desligado, cada participante vê somente mensagens da conexão atual.
+                        </small>
+                    </label>
+                </div>
+
                 <div class="room-type-info" id="room-type-info">
                     <span>🔒</span>
                     <span id="room-type-text">

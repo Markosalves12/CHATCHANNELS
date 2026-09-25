@@ -8,6 +8,7 @@ from django.db.models import Q
 from chat.models import ChatRoom
 import mimetypes
 from django.views.decorators.http import require_POST
+import json
 
 def get_unread_count(request, id_random=None):
     if not request.user.is_authenticated:
@@ -76,10 +77,22 @@ def get_message_history(request, id_random):
     """
     try:
         room = ChatRoom.objects.get(id_random=id_random)
+        if not room.can_user_access(request.user):
+            return JsonResponse({"error": "Acesso negado"}, status=403)
+
+        if not room.history_enabled:
+            return JsonResponse([], safe=False)
+
+        recent_message_ids = list(
+            Message.objects.filter(room=room, is_deleted=False)
+            .order_by("-timestamp")
+            .values_list("id", flat=True)[:50]
+        )
         messages = (
-            Message.objects.filter(room=room)
+            Message.objects.filter(id__in=recent_message_ids)
             .order_by("timestamp")
             .select_related("author")
+            .prefetch_related("attachments")
         )
 
         history = []

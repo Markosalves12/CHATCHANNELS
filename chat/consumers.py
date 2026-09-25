@@ -46,8 +46,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        # Enviar histórico de mensagens
-        await self.send_message_history()
+        # O histórico é carregado exclusivamente pelo endpoint HTTP.
+        # Assim evitamos mensagens duplicadas entre a API e o WebSocket.
 
     async def disconnect(self, close_code):
         # Sair dos grupos ao desconectar
@@ -79,43 +79,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Garante que usuário é membro da sala privada"""
         if room.is_private and not room.members.filter(id=self.user.id).exists():
             room.add_member(self.user, added_by=room.created_by)
-
-    # ------------------------
-    # Histórico de mensagens
-    # ------------------------
-
-    async def send_message_history(self):
-        """Envia histórico de mensagens visíveis para o usuário"""
-        messages_data = await self.get_messages_history_data()
-        for message_data in messages_data:
-            await self.send(text_data=json.dumps({
-                "type": "chat_message",
-                "message": message_data["content"],
-                "author": message_data["author_username"],
-                "author_id": message_data["author_id"],
-                "message_id": message_data["id"],
-                "timestamp": message_data["timestamp"].isoformat(),
-                "is_history": True
-            }))
-
-    @sync_to_async
-    def get_messages_history_data(self):
-        """Obtém histórico de mensagens"""
-        try:
-            room = ChatRoom.objects.get(id_random=self.room_id_random)
-            messages = Message.objects.filter(room=room).select_related("author").order_by("timestamp")[:50]
-            return [
-                {
-                    "id": msg.id,
-                    "content": msg.content,
-                    "author_username": msg.author.username,
-                    "author_id": msg.author.id,
-                    "timestamp": msg.timestamp,
-                }
-                for msg in messages
-            ]
-        except ChatRoom.DoesNotExist:
-            return []
 
     # ------------------------
     # Receber mensagens
