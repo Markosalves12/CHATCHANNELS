@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
     <title>Criar conversa | Zelador Chat</title>
-    <link rel="stylesheet" href="{% static 'chat/workspace.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'chat/workspace.css' %}?v=2">
 </head>
 <body>
     <div class="workspace-shell create-layout">
@@ -14,51 +14,36 @@
             <div class="brand-row"><a href="{% url 'chat_home' %}" class="brand"><span class="brand-mark">Z</span><span>Zelador Chat</span></a></div>
             <div class="sidebar-actions"><a href="{% url 'create_room' %}" class="primary-action active"><span aria-hidden="true">＋</span> Nova conversa</a></div>
             <nav class="creation-steps" aria-label="Etapas da criação">
-                <div class="creation-step active"><span>1</span><div><strong>Informações</strong><small>Nome e privacidade</small></div></div>
-                <div class="creation-step"><span>2</span><div><strong>Participantes</strong><small>Escolha quem participa</small></div></div>
+                <div class="creation-step active"><span>1</span><div><strong>Informações</strong><small>Nome e histórico</small></div></div>
+                <div class="creation-step active"><span>2</span><div><strong>Participantes</strong><small>Acesso somente por convite</small></div></div>
             </nav>
             <div class="account-row"><span class="person-avatar">{{ user.username|first|upper }}</span><span class="account-copy"><strong>{{ user.username }}</strong><small>{{ user.email }}</small></span></div>
         </aside>
-
         <main class="workspace-main">
-            <header class="workspace-header create-header">
-                <a href="{% url 'chat_home' %}" class="back-button" aria-label="Voltar" title="Voltar">←</a>
-                <div><p class="eyebrow">NOVA CONVERSA</p><h1>Criar conversa</h1><p class="header-description">Defina o espaço e convide os participantes.</p></div>
-            </header>
-
+            <header class="workspace-header create-header"><a href="{% url 'chat_home' %}" class="back-button" aria-label="Voltar" title="Voltar">←</a><div><p class="eyebrow">NOVA CONVERSA PRIVADA</p><h1>Criar conversa</h1><p class="header-description">Defina o espaço e convide quem poderá acessar.</p></div></header>
             <div class="form-page">
                 {% if messages %}<div class="flash-stack">{% for message in messages %}<div class="flash-message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
                 <form method="post" id="create-room-form" class="room-form">
                     {% csrf_token %}
                     <section class="form-section" aria-labelledby="details-title">
-                        <div class="form-section-heading"><span class="section-number">1</span><div><h2 id="details-title">Informações da conversa</h2><p>Escolha um nome fácil de reconhecer.</p></div></div>
+                        <div class="form-section-heading"><span class="section-number">1</span><div><h2 id="details-title">Informações da conversa</h2><p>Todas as salas são privadas e acessíveis somente por convite.</p></div></div>
                         <div class="field-group"><label for="{{ form.name.id_for_label }}">Nome da conversa</label>{{ form.name }}{% if form.name.errors %}<p class="field-error">{{ form.name.errors.0 }}</p>{% endif %}</div>
-                        <div class="option-list">
-                            <label class="option-row" for="{{ form.is_private.id_for_label }}"><span class="option-icon">⌑</span><span class="option-copy"><strong>Sala privada</strong><small>Somente participantes convidados podem entrar.</small></span>{{ form.is_private }}</label>
-                            <label class="option-row{% if form.history_enabled.field.disabled %} disabled{% endif %}" for="{{ form.history_enabled.id_for_label }}"><span class="option-icon">◷</span><span class="option-copy"><strong>Permitir histórico de mensagens</strong><small>{% if form.history_enabled.field.disabled %}Somente administradores podem alterar esta opção.{% else %}Disponibiliza as 50 mensagens mais recentes ao entrar.{% endif %}</small></span>{{ form.history_enabled }}</label>
-                        </div>
+                        <div class="privacy-notice"><span aria-hidden="true">⌑</span><span><strong>Conversa privada</strong><small>Somente o criador e os participantes selecionados terão acesso.</small></span></div>
+                        <div class="option-list"><label class="option-row{% if form.history_enabled.field.disabled %} disabled{% endif %}" for="{{ form.history_enabled.id_for_label }}"><span class="option-icon">◷</span><span class="option-copy"><strong>Permitir histórico de mensagens</strong><small>{% if form.history_enabled.field.disabled %}Somente administradores podem alterar esta opção.{% else %}Disponibiliza as 50 mensagens mais recentes, incluindo arquivos e links.{% endif %}</small></span>{{ form.history_enabled }}</label></div>
                     </section>
-
-                    <section class="form-section participants-section" id="participants-section" aria-labelledby="participants-title">
+                    <section class="form-section participants-section" aria-labelledby="participants-title">
                         <div class="form-section-heading"><span class="section-number">2</span><div><h2 id="participants-title">Participantes</h2><p>Selecione as pessoas que terão acesso.</p></div><span class="selected-count" id="selected-count">0 selecionados</span></div>
                         <label class="people-search" for="user-search"><span aria-hidden="true">⌕</span><input type="search" id="user-search" placeholder="Buscar por nome ou e-mail" autocomplete="off"></label>
                         <div class="users-list" id="users-list">
-                            {% for participant in form.participants.field.queryset %}
-                            <label class="user-item" data-user-search="{{ participant.username|lower }} {{ participant.email|lower }}" for="user-{{ participant.id }}">
-                                <span class="person-avatar">{{ participant.username|first|upper }}</span>
-                                <span class="user-copy"><strong>{{ participant.username }}</strong><small>{{ participant.email|default:"Sem e-mail cadastrado" }}</small></span>
-                                <input type="checkbox" name="participants" value="{{ participant.id }}" id="user-{{ participant.id }}" class="user-checkbox" {% if participant.id|stringformat:"s" in form.participants.value %}checked{% endif %}>
-                            </label>
-                            {% empty %}<div class="list-empty">Nenhum usuário disponível para adicionar.</div>{% endfor %}
+                            {% for participant in form.participants.field.queryset %}<label class="user-item" data-user-search="{{ participant.username|lower }} {{ participant.email|lower }}" for="user-{{ participant.id }}"><span class="person-avatar">{{ participant.username|first|upper }}</span><span class="user-copy"><strong>{{ participant.username }}</strong><small>{{ participant.email|default:"Sem e-mail cadastrado" }}</small></span><input type="checkbox" name="participants" value="{{ participant.id }}" id="user-{{ participant.id }}" class="user-checkbox" {% if participant.id|stringformat:"s" in form.participants.value %}checked{% endif %}></label>{% empty %}<div class="list-empty">Nenhum usuário disponível para adicionar.</div>{% endfor %}
                             <div class="list-empty" id="no-users" hidden>Nenhuma pessoa encontrada.</div>
                         </div>
                     </section>
-
                     <div class="form-actions"><a href="{% url 'chat_home' %}" class="secondary-action">Cancelar</a><button type="submit" class="submit-action" id="create-submit"><span aria-hidden="true">＋</span> Criar conversa</button></div>
                 </form>
             </div>
         </main>
     </div>
-    <script src="{% static 'chat/create-room.js' %}?v=1" defer></script>
+    <script src="{% static 'chat/create-room.js' %}?v=2" defer></script>
 </body>
 </html>

@@ -19,16 +19,12 @@ class CreateRoomForm(forms.ModelForm):
 
     class Meta:
         model = ChatRoom
-        fields = ['name', 'is_private', 'history_enabled', 'participants']
+        fields = ['name', 'history_enabled', 'participants']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nome da sala',
                 'required': True
-            }),
-            'is_private': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'id': 'id_is_private'
             }),
             'history_enabled': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
@@ -37,7 +33,6 @@ class CreateRoomForm(forms.ModelForm):
         }
         labels = {
             'name': 'Nome da Sala',
-            'is_private': 'Sala Privada',
             'history_enabled': 'Permitir histórico de mensagens'
         }
 
@@ -74,15 +69,13 @@ class CreateRoomForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         participants = self.cleaned_data.get('participants', [])
+        instance.is_private = True
 
         # Sala existente → atualização
         if self.instance and self.instance.pk:
             current_members = set(self.instance.members.all())
-            if instance.is_private:
-                new_members = set(participants)
-                new_members.add(self.request.user)
-            else:
-                new_members = set()
+            new_members = set(participants)
+            new_members.add(instance.created_by)
 
             added_users = new_members - current_members
             removed_users = current_members - new_members
@@ -99,9 +92,8 @@ class CreateRoomForm(forms.ModelForm):
             instance.created_by = self.request.user
             instance.save()
 
-            if instance.is_private:
-                instance.add_member(self.request.user, added_by=self.request.user)
-                for user in participants:
-                    instance.add_member(user, added_by=self.request.user)
+            instance.add_member(self.request.user, added_by=self.request.user)
+            for user in participants:
+                instance.add_member(user, added_by=self.request.user)
 
         return instance

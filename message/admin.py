@@ -1,7 +1,6 @@
 # chat/admin.py
 from django.contrib import admin
 from chat.models import Message
-from django.contrib.auth.models import User
 
 
 @admin.register(Message)
@@ -29,7 +28,7 @@ class MessageAdmin(admin.ModelAdmin):
     def mark_as_read_by_all(self, request, queryset):
         for message in queryset:
             room = message.room
-            members = room.members.all() if room.is_private else User.objects.all()
+            members = room.members.all()
             for user in members:
                 if room.can_user_access(user) and not message.is_read_by(user):
                     message.mark_as_read(user)

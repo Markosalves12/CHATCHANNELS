@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
     <title>{{ room_name }} | Zelador Chat</title>
-    <link rel="stylesheet" href="{% static 'chat/room.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'chat/room.css' %}?v=4">
 </head>
 <body id="chat-app" data-room-id="{{ id_random }}" data-room-name="{{ room_name|escape }}" data-username="{{ request.user.username|escape }}" data-user-id="{{ request.user.id }}" data-history-enabled="{{ room.history_enabled|yesno:'true,false' }}">
     <div class="app-shell">
@@ -42,7 +42,7 @@
                             <span class="conversation-avatar">{{ chat_room.name|first|upper }}</span>
                             <span class="conversation-copy">
                                 <span class="room-name">{{ chat_room.name }}</span>
-                                <span class="conversation-meta">{% if chat_room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}</span>
+                                <span class="conversation-meta">Conversa privada</span>
                             </span>
                             {% if chat_room.unread_count > 0 %}<span class="unread-count">{{ chat_room.unread_count }}</span>{% endif %}
                         </a>
@@ -90,12 +90,13 @@
                         <span class="presence-dot online" aria-label="Conectado"></span>
                     </div>
                     <p>
-                        {% if room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}
+                        Conversa privada
                         <span aria-hidden="true">•</span>
                         {% if room.history_enabled %}Histórico disponível{% else %}Somente esta sessão{% endif %}
                     </p>
                 </div>
                 <div id="header-actions">
+                    <button id="shared-content-button" class="header-button" type="button" title="Ver arquivos, imagens e links"><span aria-hidden="true">▣</span><span class="action-label">Arquivos</span></button>
                     <button id="mark-as-read-button" class="header-button" type="button" onclick="markMessagesAsRead()" title="Marcar mensagens como lidas">
                         <span aria-hidden="true">✓</span><span class="action-label">Marcar como lidas</span>
                     </button>
@@ -178,7 +179,28 @@
         </div>
     </div>
     {% endif %}
+
+    <div id="shared-content-modal" class="modal side-modal" role="dialog" aria-modal="true" aria-labelledby="shared-content-title">
+        <div class="modal-content shared-content-panel">
+            <div class="modal-header"><div><span class="eyebrow">CONTEÚDO COMPARTILHADO</span><h2 id="shared-content-title">Arquivos da conversa</h2></div><button id="close-shared-content" class="icon-button" type="button" aria-label="Fechar">×</button></div>
+            <div class="shared-tabs" role="tablist">
+                <button class="shared-tab active" type="button" data-shared-tab="images">Imagens <span id="images-count">0</span></button>
+                <button class="shared-tab" type="button" data-shared-tab="documents">Documentos <span id="documents-count">0</span></button>
+                <button class="shared-tab" type="button" data-shared-tab="links">Links <span id="links-count">0</span></button>
+            </div>
+            <div id="shared-content-list" class="shared-content-list"><div class="conversation-state">Carregando conteúdo...</div></div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal preview-modal" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+        <div class="preview-shell">
+            <header class="preview-header"><div><span class="eyebrow" id="preview-kind">ARQUIVO</span><h2 id="preview-title">Visualização</h2></div><div class="preview-actions"><a id="preview-open" href="#" target="_blank" rel="noopener" class="secondary-button">Abrir</a><a id="preview-download" href="#" download class="secondary-button">Baixar</a><button id="close-preview" class="icon-button" type="button" aria-label="Fechar">×</button></div></header>
+            <div id="preview-stage" class="preview-stage"></div>
+            <footer id="carousel-controls" class="carousel-controls" hidden><button id="previous-image" type="button" class="secondary-button" aria-label="Imagem anterior">←</button><span id="carousel-counter"></span><button id="next-image" type="button" class="secondary-button" aria-label="Próxima imagem">→</button></footer>
+        </div>
+    </div>
+
     <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
-    <script src="{% static 'chat/room.js' %}?v=3" defer></script>
+    <script src="{% static 'chat/room.js' %}?v=4" defer></script>
 </body>
 </html>

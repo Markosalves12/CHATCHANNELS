@@ -1,6 +1,4 @@
 (function () {
-    const privateInput = document.getElementById('id_is_private');
-    const participantsSection = document.getElementById('participants-section');
     const searchInput = document.getElementById('user-search');
     const userItems = Array.from(document.querySelectorAll('.user-item'));
     const checkboxes = Array.from(document.querySelectorAll('.user-checkbox'));
@@ -9,18 +7,12 @@
     const form = document.getElementById('create-room-form');
     const submitButton = document.getElementById('create-submit');
 
-    function updateParticipantsVisibility() {
-        if (!privateInput || !participantsSection) return;
-        participantsSection.classList.toggle('is-hidden', !privateInput.checked);
-    }
-
     function updateSelectedCount() {
         if (!selectedCount) return;
         const count = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
         selectedCount.textContent = count + (count === 1 ? ' selecionado' : ' selecionados');
     }
 
-    if (privateInput) privateInput.addEventListener('change', updateParticipantsVisibility);
     checkboxes.forEach(function (checkbox) { checkbox.addEventListener('change', updateSelectedCount); });
 
     if (searchInput) {
@@ -43,6 +35,5 @@
         });
     }
 
-    updateParticipantsVisibility();
     updateSelectedCount();
 }());

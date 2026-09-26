@@ -33,10 +33,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        # Garantir que usuário seja membro em salas privadas
-        room = await sync_to_async(ChatRoom.objects.get)(id_random=self.room_id_random)
-        if room.is_private:
-            await self.ensure_user_membership(room)
 
         # Atualizar última atividade
         await self.update_user_activity()
@@ -77,7 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def ensure_user_membership(self, room):
         """Garante que usuário é membro da sala privada"""
-        if room.is_private and not room.members.filter(id=self.user.id).exists():
+        if not room.members.filter(id=self.user.id).exists():
             room.add_member(self.user, added_by=room.created_by)
 
     # ------------------------
@@ -148,6 +144,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     for attachment in related_attachments:
                         attachments_data.append({
 
+                            'id': attachment.id,
                             'file_url': attachment.file.url,
 
                             'original_filename': attachment.original_filename,

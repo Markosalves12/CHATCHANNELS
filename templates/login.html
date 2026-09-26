@@ -3,327 +3,56 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema de Chat</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            max-width: 600px; /* Aumentado de 400px para 600px */
-            width: 100%; /* Garante que ocupe o espaço disponível até o limite */
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
-            color: white;
-            padding: 40px; /* Aumentado ligeiramente para harmonizar com a largura */
-            text-align: center;
-        }
-
-        .login-header h1 {
-            font-size: 32px; /* Aumentado para manter proporção */
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .login-header p {
-            opacity: 0.9;
-            font-size: 16px; /* Aumentado para harmonizar */
-        }
-
-        .login-form {
-            padding: 40px; /* Aumentado para mais espaço interno */
-        }
-
-        .form-group {
-            margin-bottom: 30px; /* Aumentado para mais espaçamento */
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 16px 18px; /* Aumentado para maior conforto visual */
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #4a76a8;
-            box-shadow: 0 0 0 3px rgba(74, 118, 168, 0.1);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 16px 28px; /* Aumentado para harmonizar */
-            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(74, 118, 168, 0.3);
-        }
-
-        .login-links {
-            margin-top: 25px;
-            text-align: center;
-        }
-
-        .login-links a {
-            color: #4a76a8;
-            text-decoration: none;
-            font-size: 14px;
-            margin: 0 10px;
-            transition: color 0.3s ease;
-        }
-
-        .login-links a:hover {
-            color: #3a5a80;
-            text-decoration: underline;
-        }
-
-        .alert {
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background-color: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
-        }
-
-        .alert-success {
-            background-color: #efe;
-            color: #363;
-            border: 1px solid #cfc;
-        }
-
-        .alert-info {
-            background-color: #eef;
-            color: #336;
-            border: 1px solid #ccf;
-        }
-
-        .form-divider {
-            display: flex;
-            align-items: center;
-            margin: 30px 0;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-divider::before,
-        .form-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background-color: #e1e5e9;
-            margin: 0 10px;
-        }
-
-        .btn-register {
-            width: 100%;
-            padding: 16px 28px; /* Aumentado para harmonizar */
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-            color: white;
-            text-decoration: none;
-        }
-
-        @media (max-width: 768px) {
-            .login-container {
-                margin: 10px;
-                max-width: none;
-            }
-
-            .login-header {
-                padding: 30px;
-            }
-
-            .login-form {
-                padding: 30px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                margin: 10px;
-                max-width: none;
-            }
-
-            .login-header {
-                padding: 20px;
-            }
-
-            .login-form {
-                padding: 20px;
-            }
-
-            .login-header h1 {
-                font-size: 28px;
-            }
-
-            .login-header p {
-                font-size: 14px;
-            }
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
+    <title>Entrar | Zelador Chat</title>
+    <link rel="stylesheet" href="{% static 'chat/login.css' %}?v=1">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Zelador Chat</h1>
-            <p>Sistema de chats ZeladorX</p>
-        </div>
-
-        <div class="login-form">
-            <!-- Mensagens de alerta -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.GET.next }}">
-
-                <div class="form-group">
-                    <label for="id_email">Email:</label>
-                    <input type="text" name="email" id="id_email" class="form-control"
-                           placeholder="example@email.com.br" required autofocus
-                           value="{{ form.email.value|default:'' }}">
-                    {% if form.email.errors %}
-                        <div style="color: #c33; font-size: 12px; margin-top: 5px;">
-                            {{ form.email.errors.0 }}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="id_senha">Senha:</label>
-                    <input type="password" name="senha" id="id_senha" class="form-control"
-                           placeholder="Sua senha" required>
-                    {% if form.senha.errors %}
-                        <div style="color: #c33; font-size: 12px; margin-top: 5px;">
-                            {{ form.senha.errors.0 }}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="btn-login">Login</button>
-
-                <div class="form-divider">ou</div>
-
-            </form>
-
-            <div class="login-links">
-                <a href="{% url 'reset_password' %}">Esqueceu a senha?</a>
+    <main class="login-shell">
+        <section class="login-intro" aria-labelledby="login-brand-title">
+            <a class="login-brand" href="/" aria-label="Zelador Chat"><span class="brand-mark">Z</span><span>Zelador Chat</span></a>
+            <div class="intro-copy">
+                <p class="eyebrow">COMUNICAÇÃO CORPORATIVA</p>
+                <h1 id="login-brand-title">Sua equipe conectada ao trabalho.</h1>
+                <p>Conversas privadas, arquivos e decisões reunidos em um ambiente seguro da família ZeladorX.</p>
             </div>
-        </div>
-    </div>
+            <div class="intro-status"><span></span> Ambiente corporativo</div>
+        </section>
 
-    <script>
-        // Prevenir reenvio do formulário
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const submitButton = this.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Entrando...';
-        });
+        <section class="login-panel" aria-labelledby="login-title">
+            <div class="login-card">
+                <div class="mobile-brand"><span class="brand-mark">Z</span><strong>Zelador Chat</strong></div>
+                <p class="eyebrow">BEM-VINDO</p>
+                <h2 id="login-title">Entre na sua conta</h2>
+                <p class="login-description">Use seu acesso corporativo para continuar.</p>
 
-        // Mostrar/ocultar senha
-        const passwordInput = document.getElementById('id_senha');
-        const togglePassword = document.createElement('span');
-        togglePassword.style.cssText = `
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            opacity: 0.5;
-            font-size: 18px;
-        `;
-        togglePassword.innerHTML = '👁️';
-        togglePassword.title = 'Mostrar senha';
+                {% if messages %}
+                <div class="alert-stack">{% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}</div>
+                {% endif %}
 
-        const passwordGroup = document.querySelector('.form-group:has(#id_senha)');
-        passwordGroup.style.position = 'relative';
-        passwordGroup.appendChild(togglePassword);
-
-        togglePassword.addEventListener('click', function() {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                this.innerHTML = '🔒';
-                this.title = 'Ocultar senha';
-            } else {
-                passwordInput.type = 'password';
-                this.innerHTML = '👁️';
-                this.title = 'Mostrar senha';
-            }
-        });
-
-        // Corrigir foco no campo de email
-        document.getElementById('id_email').focus();
-    </script>
+                <form method="post" action="{% url 'login' %}" id="login-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    <div class="field-group">
+                        <label for="id_email">E-mail</label>
+                        <input type="email" name="email" id="id_email" class="form-control" placeholder="nome@empresa.com.br" required autofocus value="{{ form.email.value|default:'' }}" autocomplete="email">
+                        {% if form.email.errors %}<p class="field-error">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="field-group">
+                        <div class="field-label-row"><label for="id_senha">Senha</label><a href="{% url 'reset_password' %}">Esqueceu a senha?</a></div>
+                        <div class="password-field">
+                            <input type="password" name="senha" id="id_senha" class="form-control" placeholder="Digite sua senha" required autocomplete="current-password">
+                            <button type="button" id="toggle-password" aria-label="Mostrar senha" title="Mostrar senha">◉</button>
+                        </div>
+                        {% if form.senha.errors %}<p class="field-error">{{ form.senha.errors.0 }}</p>{% endif %}
+                    </div>
+                    <button type="submit" class="login-button" id="login-submit">Entrar <span aria-hidden="true">→</span></button>
+                </form>
+                <p class="security-note"><span aria-hidden="true">●</span> Acesso restrito a colaboradores autorizados.</p>
+            </div>
+        </section>
+    </main>
+    <script src="{% static 'chat/login.js' %}?v=1" defer></script>
 </body>
 </html>

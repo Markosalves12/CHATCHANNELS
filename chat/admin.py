@@ -12,20 +12,14 @@ class ChatRoomAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)
+    actions = ['make_private', 'enable_history', 'disable_history']
 
     # Exibir contagem de membros
     def member_count(self, obj):
         return obj.members.count()
     member_count.short_description = 'Número de Membros'
 
-    # Ação para tornar uma sala pública ou privada
-    actions = ['make_public', 'make_private', 'enable_history', 'disable_history']
-
-    def make_public(self, request, queryset):
-        queryset.update(is_private=False)
-        self.message_user(request, "As salas selecionadas foram tornadas públicas.")
-    make_public.short_description = "Tornar salas públicas"
-
+    # Todas as salas do produto são privadas.
     def make_private(self, request, queryset):
         queryset.update(is_private=True)
         self.message_user(request, "As salas selecionadas foram tornadas privadas.")

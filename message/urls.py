@@ -7,6 +7,7 @@ urlpatterns = [
     path('unread-count/', views.get_unread_count, name='total_unread_count'),
     path('<str:id_random>/mark-read/', views.mark_all_as_read, name='mark_all_read'),
     path('<str:id_random>/messages/', views.get_message_history, name='get_message_history'),
+    path('<str:id_random>/shared/', views.get_shared_content, name='get_shared_content'),
     path('<int:message_id>/', views.delete_message, name='delete_message'),
     path('<int:message_id>/', views.edit_message, name='edit_message'),
     path('<int:attachment_id>/', views.delete_attachment, name='delete_attachment'),

@@ -6,7 +6,7 @@ from utils.utils import generate_id_random
 class ChatRoom(models.Model):
     id_random = models.CharField(unique=True,default=generate_id_random,max_length=20)
     name = models.CharField(max_length=255)
-    is_private = models.BooleanField(default=False)
+    is_private = models.BooleanField(default=True)
     history_enabled = models.BooleanField(
         default=False,
         verbose_name='Histórico habilitado',
@@ -67,8 +67,6 @@ class ChatRoom(models.Model):
 
     def can_user_access(self, user):
         """Verifica se usuário tem acesso à sala"""
-        if not self.is_private:
-            return True
         return self.members.filter(id=user.id).exists() or self.created_by == user
 
     def get_members_info(self):

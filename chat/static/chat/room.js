@@ -10,6 +10,21 @@ const noResults = document.getElementById('no-results');
 const openSidebarButton = document.getElementById('open-sidebar');
 const closeSidebarButton = document.getElementById('close-sidebar');
 const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+const sharedContentButton = document.getElementById('shared-content-button');
+const sharedContentModal = document.getElementById('shared-content-modal');
+const closeSharedContentButton = document.getElementById('close-shared-content');
+const sharedContentList = document.getElementById('shared-content-list');
+const previewModal = document.getElementById('preview-modal');
+const previewStage = document.getElementById('preview-stage');
+const previewTitle = document.getElementById('preview-title');
+const previewKind = document.getElementById('preview-kind');
+const previewOpen = document.getElementById('preview-open');
+const previewDownload = document.getElementById('preview-download');
+const closePreviewButton = document.getElementById('close-preview');
+const carouselControls = document.getElementById('carousel-controls');
+const carouselCounter = document.getElementById('carousel-counter');
+const previousImageButton = document.getElementById('previous-image');
+const nextImageButton = document.getElementById('next-image');
 
 // Modal
 const membersButton = document.getElementById('members-button');
@@ -24,6 +39,9 @@ const recordAudioButton = document.getElementById('record-audio-button');
 let attachedFiles = [];
 let mediaRecorder;
 let audioChunks = [];
+let sharedContent = { images: [], documents: [], links: [] };
+let activeSharedTab = 'images';
+let activeImageIndex = 0;
 
 // Variáveis de contexto do Django
 const roomIdRandom = chatApp.dataset.roomId;
@@ -36,6 +54,21 @@ function escapeHtml(value) {
     const element = document.createElement('div');
     element.textContent = value == null ? '' : String(value);
     return element.innerHTML;
+}
+
+function safeResourceUrl(value, allowBlob) {
+    try {
+        const url = new URL(value, window.location.origin);
+        const allowed = ['http:', 'https:'];
+        if (allowBlob) allowed.push('blob:');
+        return allowed.includes(url.protocol) ? url.href : '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function urlAttribute(value, allowBlob) {
+    return escapeHtml(safeResourceUrl(value, allowBlob));
 }
 
 const chatSocket = new WebSocket(
@@ -62,74 +95,150 @@ async function checkAttachmentAccessibility(url) {
 }
 
 // Versão síncrona para preview local (sem check, pois URLs locais sempre funcionam)
+function normaliseAttachment(att) {
+    return {
+        id: att.id || '',
+        file_url: att.file_url,
+        original_filename: att.original_filename || 'Arquivo',
+        attachment_type: (att.attachment_type || 'other').toLowerCase()
+    };
+}
+
+function attachmentMarkup(att) {
+    const item = normaliseAttachment(att);
+    const fileUrl = urlAttribute(item.file_url || '', true);
+    if (!fileUrl) return '';
+    const filename = escapeHtml(item.original_filename);
+    if (item.attachment_type === 'image') {
+        return `<button type="button" class="attachment-preview-button" data-preview-kind="image" data-preview-url="${fileUrl}" data-preview-name="${filename}"><img src="${fileUrl}" alt="${filename}"></button>`;
+    }
+    if (item.attachment_type === 'video') return `<video src="${fileUrl}" controls preload="metadata"></video>`;
+    if (item.attachment_type === 'audio') return `<audio src="${fileUrl}" controls preload="metadata"></audio>`;
+    if (item.attachment_type === 'pdf') {
+        return `<button type="button" class="pdf-attachment-card" data-preview-kind="pdf" data-preview-url="${fileUrl}" data-preview-name="${filename}"><span class="file-icon">PDF</span><span>${filename}</span></button>`;
+    }
+    return `<a href="${fileUrl}" target="_blank" rel="noopener" download="${filename}"><span class="file-icon">▤</span><span>${filename}</span></a>`;
+}
+
 function createLocalAttachmentsHtml(attachments) {
-    let html = '';
-    for (const att of attachments) {
-        const fileUrl = att.file_url; // URL.createObjectURL local
-        const filename = escapeHtml(att.original_filename);
-        const attachmentType = att.attachment_type.toLowerCase();
-
-        html += `<div class="attachment-in-message">`;
-        if (attachmentType === 'image') {
-            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></a>`;
-        } else if (attachmentType === 'video') {
-            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
-        } else if (attachmentType === 'audio') {
-            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
-        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        } else {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        }
-        html += `</div>`;
-    }
-    return `<div class="attachments">${html}</div>`;
+    return `<div class="attachments">${attachments.map(att => `<div class="attachment-in-message">${attachmentMarkup(att)}</div>`).join('')}</div>`;
 }
 
-// Versão async para anexos do servidor (com check)
 async function createAttachmentsHtml(attachments) {
-    let html = '';
-    for (const att of attachments) {
-        const fileUrl = att.file_url;
-        const filename = escapeHtml(att.original_filename);
-        const attachmentType = att.attachment_type.toLowerCase();
-        const attachmentId = att.id;
-
-        const isAccessible = await checkAttachmentAccessibility(fileUrl);
-
-        html += `<div class="attachment-in-message">`;
-        if (!isAccessible) {
-            html += `<span class="file-icon" style="color: red;">⚠️</span>
-                     <span style="color: red; font-style: italic;">Anexo não encontrado: ${filename}</span>
-                     <br><small style="color: gray;">(Pode ter sido removido ou há um erro de acesso)</small>`;
-        } else if (attachmentType === 'image') {
-            html += `<a href="${fileUrl}" target="_blank"><img src="${fileUrl}" alt="${filename}" style="max-width:200px; max-height:200px; border-radius:8px;"></img></a>`;
-        } else if (attachmentType === 'video') {
-            html += `<video src="${fileUrl}" controls style="max-width:300px; border-radius:8px;"></video>`;
-        } else if (attachmentType === 'audio') {
-            html += `<audio src="${fileUrl}" controls style="width:100%;"></audio>`;
-        } else if (attachmentType === 'pdf' || attachmentType === 'document') {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        } else {
-            html += `<a href="${fileUrl}" target="_blank" download="${filename}">
-                        <span class="file-icon">📄</span>
-                        <span>${filename}</span>
-                     </a>`;
-        }
-
-        html += `</div>`;
-    }
-    return `<div class="attachments">${html}</div>`;
+    return createLocalAttachmentsHtml(attachments);
 }
+
+function extractLinks(text) {
+    return (text || '').match(/https?:\/\/[^\s<>"']+/g) || [];
+}
+
+function trackMessageContent(data) {
+    const base = { message_id: data.message_id || data.temp_id, author: data.author || username, timestamp: data.timestamp };
+    (data.attachments || []).forEach(function (raw) {
+        const attachment = Object.assign({}, base, normaliseAttachment(raw));
+        const list = attachment.attachment_type === 'image' ? sharedContent.images : sharedContent.documents;
+        if (!list.some(item => item.id && attachment.id && item.id === attachment.id)) list.unshift(attachment);
+    });
+    extractLinks(data.content || data.message).forEach(function (url) {
+        if (!sharedContent.links.some(item => item.url === url && item.message_id === base.message_id)) sharedContent.links.unshift(Object.assign({}, base, { url: url, label: url }));
+    });
+    updateSharedCounts();
+}
+
+function updateSharedCounts() {
+    ['images', 'documents', 'links'].forEach(function (kind) {
+        const counter = document.getElementById(kind + '-count');
+        if (counter) counter.textContent = sharedContent[kind].length;
+    });
+}
+
+function formatSharedDate(timestamp) {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function renderSharedContent() {
+    if (!sharedContentList) return;
+    const items = sharedContent[activeSharedTab] || [];
+    if (!items.length) {
+        const labels = { images: 'Nenhuma imagem compartilhada.', documents: 'Nenhum documento compartilhado.', links: 'Nenhum link compartilhado.' };
+        sharedContentList.innerHTML = `<div class="empty-shared">${labels[activeSharedTab]}</div>`;
+        return;
+    }
+    if (activeSharedTab === 'images') {
+        sharedContentList.innerHTML = `<div class="shared-grid">${items.map((item, index) => `<button class="shared-image" type="button" data-gallery-index="${index}" title="${escapeHtml(item.original_filename)}"><img src="${urlAttribute(item.file_url)}" alt="${escapeHtml(item.original_filename)}"></button>`).join('')}</div>`;
+        return;
+    }
+    if (activeSharedTab === 'links') {
+        sharedContentList.innerHTML = items.map(item => `<div class="shared-row"><span class="shared-row-icon">↗</span><span class="shared-row-copy"><a href="${urlAttribute(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.label)}</a><small>${escapeHtml(item.author)} · ${formatSharedDate(item.timestamp)}</small></span><span class="shared-row-actions"><a class="secondary-button" href="${urlAttribute(item.url)}" target="_blank" rel="noopener">Abrir</a></span></div>`).join('');
+        return;
+    }
+    sharedContentList.innerHTML = items.map(item => {
+        const isPdf = item.attachment_type === 'pdf';
+        return `<div class="shared-row"><span class="shared-row-icon">${isPdf ? 'PDF' : '▤'}</span><span class="shared-row-copy"><strong>${escapeHtml(item.original_filename)}</strong><small>${escapeHtml(item.author)} · ${formatSharedDate(item.timestamp)}</small></span><span class="shared-row-actions">${isPdf ? `<button class="secondary-button" type="button" data-preview-kind="pdf" data-preview-url="${urlAttribute(item.file_url)}" data-preview-name="${escapeHtml(item.original_filename)}">Ler</button>` : ''}<a class="secondary-button" href="${urlAttribute(item.file_url)}" download target="_blank" rel="noopener">Baixar</a></span></div>`;
+    }).join('');
+}
+
+async function openSharedContent() {
+    if (!sharedContentModal) return;
+    sharedContentModal.style.display = 'flex';
+    if (chatApp.dataset.historyEnabled === 'true') {
+        sharedContentList.innerHTML = '<div class="conversation-state">Carregando conteúdo...</div>';
+        try {
+            const response = await fetch(`/message/${roomIdRandom}/shared/`);
+            if (!response.ok) throw new Error('Falha ao carregar conteúdo');
+            sharedContent = await response.json();
+        } catch (error) {
+            sharedContentList.innerHTML = '<div class="empty-shared">Não foi possível carregar o conteúdo compartilhado.</div>';
+            return;
+        }
+    }
+    updateSharedCounts();
+    renderSharedContent();
+}
+
+function closeSharedContent() { if (sharedContentModal) sharedContentModal.style.display = 'none'; }
+
+function openPreview(kind, url, name, imageIndex) {
+    if (!previewModal) return;
+    previewTitle.textContent = name || 'Visualização';
+    previewKind.textContent = kind === 'pdf' ? 'DOCUMENTO PDF' : 'IMAGEM';
+    previewOpen.href = url;
+    previewDownload.href = url;
+    previewDownload.setAttribute('download', name || 'arquivo');
+    previewStage.innerHTML = '';
+    if (kind === 'pdf') {
+        const frame = document.createElement('iframe');
+        frame.src = url;
+        frame.title = 'Leitor de ' + (name || 'PDF');
+        previewStage.appendChild(frame);
+        carouselControls.hidden = true;
+    } else {
+        activeImageIndex = typeof imageIndex === 'number' ? imageIndex : Math.max(0, sharedContent.images.findIndex(item => item.file_url === url));
+        renderActiveImage(url, name);
+    }
+    previewModal.style.display = 'flex';
+}
+
+function renderActiveImage(fallbackUrl, fallbackName) {
+    const item = sharedContent.images[activeImageIndex];
+    const url = item ? item.file_url : fallbackUrl;
+    const name = item ? item.original_filename : fallbackName;
+    previewStage.innerHTML = `<img src="${urlAttribute(url, true)}" alt="${escapeHtml(name || 'Imagem')}">`;
+    previewTitle.textContent = name || 'Imagem';
+    previewOpen.href = url;
+    previewDownload.href = url;
+    carouselControls.hidden = sharedContent.images.length < 2;
+    carouselCounter.textContent = sharedContent.images.length ? `${activeImageIndex + 1} de ${sharedContent.images.length}` : '';
+}
+
+function moveCarousel(direction) {
+    if (!sharedContent.images.length) return;
+    activeImageIndex = (activeImageIndex + direction + sharedContent.images.length) % sharedContent.images.length;
+    renderActiveImage();
+}
+
+function closePreview() { if (previewModal) previewModal.style.display = 'none'; previewStage.innerHTML = ''; }
 
 // Buscar histórico de mensagens (agora async e com await)
 async function fetchMessageHistory() {
@@ -225,6 +334,10 @@ async function handleWebSocketMessage(data) {
 
                     // Re-render anexos do servidor (com check de acessibilidade)
                     if (data.attachments && data.attachments.length > 0) {
+                        const pendingContentId = pending.getAttribute('data-temp-id') || data.temp_id;
+                        sharedContent.images = sharedContent.images.filter(item => item.message_id !== pendingContentId);
+                        sharedContent.documents = sharedContent.documents.filter(item => item.message_id !== pendingContentId);
+                        trackMessageContent(data);
                         const attachmentsHtml = await createAttachmentsHtml(data.attachments);
                         const existingAttachments = pending.querySelector('.attachments');
                         if (existingAttachments) {
@@ -305,6 +418,7 @@ async function addMessageToLog(data) {
     const div = document.createElement('div');
     const messageContent = escapeHtml(data.content || data.message || '');
     const authorName = escapeHtml(data.author || '');
+    trackMessageContent(data);
 
     // Detecta se é preview local (temp_id presente e attachments com URL.createObjectURL-like)
     const isLocalPreview = data.temp_id && data.attachments && data.attachments.some(att => att.file_url.startsWith('blob:'));
@@ -390,7 +504,7 @@ function renderSidebar(roomData) {
         roomNameElement.textContent = room.name;
         const roomMeta = document.createElement('span');
         roomMeta.className = 'conversation-meta';
-        roomMeta.textContent = room.is_private ? 'Conversa privada' : 'Espaço da equipe';
+        roomMeta.textContent = 'Conversa privada';
         copy.appendChild(roomNameElement);
         copy.appendChild(roomMeta);
         roomLink.appendChild(avatar);
@@ -636,6 +750,8 @@ document.addEventListener('keydown', (e) => {
         chatInput.focus();
     }
     if (e.key === 'Escape') {
+        closeSharedContent();
+        closePreview();
         chatInput.value = '';
         chatInput.blur();
     }
@@ -663,7 +779,31 @@ function closeDeleteModal() {
 if (membersButton) membersButton.addEventListener('click', openMembersModal);
 if (closeButton) closeButton.addEventListener('click', closeMembersModal);
 
+if (sharedContentButton) sharedContentButton.addEventListener('click', openSharedContent);
+if (closeSharedContentButton) closeSharedContentButton.addEventListener('click', closeSharedContent);
+if (closePreviewButton) closePreviewButton.addEventListener('click', closePreview);
+if (previousImageButton) previousImageButton.addEventListener('click', function () { moveCarousel(-1); });
+if (nextImageButton) nextImageButton.addEventListener('click', function () { moveCarousel(1); });
+document.addEventListener('click', function (event) {
+    const preview = event.target.closest('[data-preview-kind]');
+    if (preview) openPreview(preview.dataset.previewKind, preview.dataset.previewUrl, preview.dataset.previewName);
+    const galleryItem = event.target.closest('[data-gallery-index]');
+    if (galleryItem) {
+        const index = Number(galleryItem.dataset.galleryIndex);
+        const item = sharedContent.images[index];
+        if (item) openPreview('image', item.file_url, item.original_filename, index);
+    }
+    const tab = event.target.closest('[data-shared-tab]');
+    if (tab) {
+        activeSharedTab = tab.dataset.sharedTab;
+        document.querySelectorAll('.shared-tab').forEach(button => button.classList.toggle('active', button === tab));
+        renderSharedContent();
+    }
+});
+
 window.onclick = function(event) {
+    if (event.target == sharedContentModal) closeSharedContent();
+    if (event.target == previewModal) closePreview();
     if (event.target == membersModal) {
         closeMembersModal();
     }

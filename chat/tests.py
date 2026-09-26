@@ -96,5 +96,63 @@ class DeleteRoomTests(TestCase):
         self.client.force_login(self.outsider)
         response = self.client.post(reverse('delete_room', args=[self.room.id_random]))
 
-        self.assertRedirects(response, reverse('chat_room', args=[self.room.id_random]))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('chat_room', args=[self.room.id_random]))
         self.assertTrue(ChatRoom.objects.filter(pk=self.room.pk).exists())
+
+
+class PrivateRoomPolicyTests(TestCase):
+    def setUp(self):
+        self.creator = Gerente.objects.create_user(
+            email='privado@example.com', username='Privado', password='senha-segura'
+        )
+        self.outsider = Gerente.objects.create_user(
+            email='fora@example.com', username='Fora', password='senha-segura'
+        )
+
+    def test_new_rooms_are_private_by_default(self):
+        room = ChatRoom.objects.create(name='Sala privada', created_by=self.creator)
+        self.assertTrue(room.is_private)
+
+    def test_outsider_cannot_open_private_room(self):
+        room = ChatRoom.objects.create(name='Restrita', created_by=self.creator)
+        room.add_member(self.creator, added_by=self.creator)
+        self.client.force_login(self.outsider)
+        response = self.client.get(reverse('chat_room', args=[room.id_random]))
+        self.assertRedirects(response, reverse('chat_home'))
+
+
+class SharedContentTests(TestCase):
+    def setUp(self):
+        self.creator = Gerente.objects.create_user(
+            email='conteudo@example.com', username='Conteudo', password='senha-segura'
+        )
+        self.outsider = Gerente.objects.create_user(
+            email='sem-acesso@example.com', username='SemAcesso', password='senha-segura'
+        )
+        self.room = ChatRoom.objects.create(name='Conteúdo', created_by=self.creator)
+        self.room.add_member(self.creator, added_by=self.creator)
+        Message.objects.create(
+            room=self.room, author=self.creator, content='Manual em https://example.com/manual'
+        )
+
+    def test_shared_content_is_empty_when_history_is_disabled(self):
+        self.client.force_login(self.creator)
+        response = self.client.get(reverse('get_shared_content', args=[self.room.id_random]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'images': [], 'documents': [], 'links': []})
+
+    def test_links_are_listed_when_history_is_enabled(self):
+        self.room.history_enabled = True
+        self.room.save(update_fields=['history_enabled'])
+        self.client.force_login(self.creator)
+        response = self.client.get(reverse('get_shared_content', args=[self.room.id_random]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['links'][0]['url'], 'https://example.com/manual')
+
+    def test_outsider_cannot_list_shared_content(self):
+        self.room.history_enabled = True
+        self.room.save(update_fields=['history_enabled'])
+        self.client.force_login(self.outsider)
+        response = self.client.get(reverse('get_shared_content', args=[self.room.id_random]))
+        self.assertEqual(response.status_code, 403)

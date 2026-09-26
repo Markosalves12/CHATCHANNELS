@@ -24,7 +24,7 @@
                     {% for room in chat_rooms %}
                     <a href="{% url 'chat_room' room.id_random %}" class="chat-room-item" data-room-name="{{ room.name|lower }}">
                         <span class="conversation-avatar">{{ room.name|first|upper }}</span>
-                        <span class="conversation-copy"><strong>{{ room.name }}</strong><small>{% if room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}</small></span>
+                        <span class="conversation-copy"><strong>{{ room.name }}</strong><small>Conversa privada</small></span>
                         {% if room.unread_count > 0 %}<span class="unread-count">{{ room.unread_count }}</span>{% endif %}
                     </a>
                     {% empty %}<p class="sidebar-empty">Nenhuma conversa disponível.</p>{% endfor %}
@@ -52,7 +52,7 @@
                     {% for room in chat_rooms %}
                     <a href="{% url 'chat_room' room.id_random %}" class="room-card" data-room-name="{{ room.name|lower }}">
                         <span class="room-card-avatar">{{ room.name|first|upper }}</span>
-                        <span class="room-card-copy"><strong>{{ room.name }}</strong><small>{% if room.is_private %}Privada · acesso por convite{% else %}Pública · espaço da equipe{% endif %}</small></span>
+                        <span class="room-card-copy"><strong>{{ room.name }}</strong><small>Privada · acesso por convite</small></span>
                         {% if room.unread_count > 0 %}<span class="card-unread">{{ room.unread_count }} nova{{ room.unread_count|pluralize }}</span>{% else %}<span class="open-room">Abrir <span aria-hidden="true">→</span></span>{% endif %}
                     </a>
                     {% empty %}

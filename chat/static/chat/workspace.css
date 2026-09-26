@@ -145,3 +145,10 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid 
     .option-row input { margin-top: 8px; }
     .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
 }
+
+.privacy-notice { margin-top: 18px; padding: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid #cce8d3; border-radius: 7px; color: var(--success); background: var(--success-soft); }
+.privacy-notice > span:first-child { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: var(--surface); font-size: 18px; }
+.privacy-notice > span:last-child { display: grid; gap: 3px; }
+.privacy-notice small { color: #42634c; }
+.creator-badge { padding: 5px 9px; border-radius: 11px; color: var(--success); background: var(--success-soft); font-size: 11px; font-weight: 700; }
+.creator-item { cursor: default; background: var(--surface-soft); }

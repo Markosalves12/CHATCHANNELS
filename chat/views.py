@@ -19,11 +19,9 @@ def chat_home(request):
         return redirect('login')
 
     """Página inicial do chat - lista todas as salas disponíveis"""
-    # Obter todas as salas públicas + salas privadas onde o usuário é membro
+    # Todas as salas são privadas: listar somente criações e participações.
     chat_rooms = ChatRoom.objects.filter(
-        Q(is_private=False) |
-        Q(members=request.user) |
-        Q(created_by=request.user)
+        Q(members=request.user) | Q(created_by=request.user)
     ).distinct()
 
     # Adicionar contagem de mensagens não lidas para cada sala
@@ -43,11 +41,10 @@ def chat_home(request):
         if form.is_valid():
             room = form.save(commit=False)
             room.created_by = request.user
+            room.is_private = True
             room.save()
 
-            # Se for sala privada, adiciona o criador como membro
-            if room.is_private:
-                room.add_member(request.user, added_by=request.user)
+            room.add_member(request.user, added_by=request.user)
 
             return redirect('chat_room', id_random=room.id_random)
 
@@ -115,6 +112,7 @@ def create_room(request):
             try:
                 room = form.save(commit=False)
                 room.created_by = request.user
+                room.is_private = True
                 room.save()
 
                 # Obter participantes selecionados
@@ -128,32 +126,17 @@ def create_room(request):
                     # Se não existir, podemos criar ou usar um fallback
                     system_user = request.user  # Fallback para o criador
 
-                # Adicionar participantes (apenas para salas privadas)
-                if room.is_private:
-                    # Adicionar o criador primeiro
-                    room.add_member(request.user, added_by=request.user)
-
-                    # Adicionar participantes selecionados
-                    for user in participants:
-                        if not room.members.filter(id=user.id).exists():
-                            room.add_member(user, added_by=request.user)
-                            added_count += 1
-
-                            # Cria uma mensagem de sistema para notificar na sala
-                            notification_message = f"{request.user.username} adicionou {user.username} à sala."
-                            Message.objects.create(
-                                room=room,
-                                author=system_user,
-                                content=notification_message
-                            )
-                else:
-                    # Mensagem de sistema para salas públicas
-                    notification_message = f"{request.user.username} criou a sala."
-                    Message.objects.create(
-                        room=room,
-                        author=system_user,
-                        content=notification_message
-                    )
+                # Todas as conversas são privadas e acessíveis somente por convite.
+                room.add_member(request.user, added_by=request.user)
+                for user in participants:
+                    if not room.members.filter(id=user.id).exists():
+                        room.add_member(user, added_by=request.user)
+                        added_count += 1
+                        Message.objects.create(
+                            room=room,
+                            author=system_user,
+                            content=f"{request.user.username} adicionou {user.username} à sala."
+                        )
 
                 # Notifica todos os participantes (incluindo o criador)
                 # para que eles atualizem sua barra lateral
@@ -173,13 +156,10 @@ def create_room(request):
                     )
 
                 # Mensagem de sucesso
-                if room.is_private:
-                    messages.success(
-                        request,
-                        f'Sala "{room.name}" criada com sucesso! {added_count} participante(s) adicionado(s).'
-                    )
-                else:
-                    messages.success(request, f'Sala pública "{room.name}" criada com sucesso!')
+                messages.success(
+                    request,
+                    f'Conversa privada "{room.name}" criada com sucesso! {added_count} participante(s) adicionado(s).'
+                )
 
                 return redirect('chat_room', id_random=room.id_random)
 
@@ -218,7 +198,7 @@ def edit_room(request, id_random):
             # Obter a lista atual de membros antes de salvar o formulário
             current_members = set(room.members.all())
 
-            # Salva o formulário (altera nome e is_private)
+            # Salva nome, histórico e participantes; a sala permanece privada.
             form.save()
 
             # Obter a nova lista de membros após o salvamento
@@ -451,11 +431,6 @@ def leave_room(request, id_random):
     """Usuário sai de uma sala privada."""
     room = get_object_or_404(ChatRoom, id_random=id_random)
 
-    # Só faz sentido sair de salas privadas
-    if not room.is_private:
-        messages.error(request, 'Você não pode sair de uma sala pública.')
-        return redirect('chat_room', id_random=room.id_random)
-
     # Criador não pode sair sem transferir
     if room.created_by == request.user:
         messages.error(request, 'O criador não pode sair da sala. Transfira a propriedade primeiro.')
@@ -533,10 +508,9 @@ def mark_all_as_read(request, id_random):
     # Obter mensagens não lidas
     unread_messages = Message.objects.filter(room=room).exclude(read_by=request.user).exclude(author=request.user)
 
-    if room.is_private:
-        user_joined_time = room.get_member_joined_time(request.user)
-        if user_joined_time:
-            unread_messages = unread_messages.filter(timestamp__gte=user_joined_time)
+    user_joined_time = room.get_member_joined_time(request.user)
+    if user_joined_time:
+        unread_messages = unread_messages.filter(timestamp__gte=user_joined_time)
 
     # Marcar como lidas
     count = 0

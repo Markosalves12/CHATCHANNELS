@@ -6,7 +6,7 @@ from chat.models import Message
 from attachments.models import Attachment
 from django.db.models import Q
 from chat.models import ChatRoom
-import mimetypes
+import re
 from django.views.decorators.http import require_POST
 import json
 
@@ -26,9 +26,7 @@ def get_unread_count(request, id_random=None):
     else:
         # Contagem total para todas as salas
         rooms = ChatRoom.objects.filter(
-            Q(is_private=False) |
-            Q(members=request.user) |
-            Q(created_by=request.user)
+            Q(members=request.user) | Q(created_by=request.user)
         ).distinct()
 
         total_unread = 0
@@ -50,10 +48,9 @@ def mark_all_as_read(request, id_random):
     # Obter mensagens não lidas
     unread_messages = Message.objects.filter(room=room).exclude(read_by=request.user).exclude(author=request.user)
 
-    if room.is_private:
-        user_joined_time = room.get_member_joined_time(request.user)
-        if user_joined_time:
-            unread_messages = unread_messages.filter(timestamp__gte=user_joined_time)
+    user_joined_time = room.get_member_joined_time(request.user)
+    if user_joined_time:
+        unread_messages = unread_messages.filter(timestamp__gte=user_joined_time)
 
     # Marcar como lidas
     count = 0
@@ -99,15 +96,7 @@ def get_message_history(request, id_random):
         for msg in messages:
             attachments_data = []
             for att in msg.attachments.all():
-                # Detecta tipo do anexo
-                mime, _ = mimetypes.guess_type(att.file.name)
-                if mime:
-                    attachment_type = mime.split("/")[0]  # "image", "video", "audio", "application"
-                    # tratar pdf como "pdf"
-                    if mime == "application/pdf":
-                        attachment_type = "pdf"
-                else:
-                    attachment_type = "document"
+                attachment_type = att.attachment_type or "other"
 
                 attachments_data.append({
                     "id": att.id,
@@ -131,6 +120,48 @@ def get_message_history(request, id_random):
         return JsonResponse({"error": "Sala não encontrada"}, status=404)
 
 
+def get_shared_content(request, id_random):
+    """Lista arquivos e links compartilhados, respeitando acesso e histórico."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Autenticação necessária'}, status=401)
+
+    room = get_object_or_404(ChatRoom, id_random=id_random)
+    if not room.can_user_access(request.user):
+        return JsonResponse({'error': 'Acesso negado'}, status=403)
+    if not room.history_enabled:
+        return JsonResponse({'images': [], 'documents': [], 'links': []})
+
+    recent_ids = list(
+        Message.objects.filter(room=room, is_deleted=False)
+        .order_by('-timestamp').values_list('id', flat=True)[:200]
+    )
+    room_messages = (
+        Message.objects.filter(id__in=recent_ids).order_by('-timestamp')
+        .select_related('author').prefetch_related('attachments')
+    )
+    content = {'images': [], 'documents': [], 'links': []}
+    url_pattern = re.compile(r'https?://[^\s<>"\']+')
+
+    for message in room_messages:
+        base = {
+            'message_id': message.id,
+            'author': message.author.username,
+            'timestamp': message.timestamp.isoformat(),
+        }
+        for attachment in message.attachments.all():
+            item = {
+                **base,
+                'id': attachment.id,
+                'file_url': attachment.file.url,
+                'original_filename': attachment.original_filename,
+                'attachment_type': attachment.attachment_type,
+            }
+            target = 'images' if attachment.attachment_type == 'image' else 'documents'
+            content[target].append(item)
+        for url in url_pattern.findall(message.content or ''):
+            content['links'].append({**base, 'url': url.rstrip('.,;:)'), 'label': url.rstrip('.,;:)')})
+
+    return JsonResponse(content)
 
 
 @require_POST
@@ -186,7 +217,7 @@ def edit_message(request, message_id):
                         {
                             "file_url": att.file.url,
                             "original_filename": att.original_filename,
-                            "attachment_type": mimetypes.guess_type(att.file.name)[0].split("/")[0] if mimetypes.guess_type(att.file.name)[0] else "document",
+                            "attachment_type": att.attachment_type or "other",
                         } for att in message.attachments.all()
                     ],
                     "timestamp": message.timestamp.isoformat(),
@@ -222,7 +253,7 @@ def delete_attachment(request, attachment_id):
                     {
                         "file_url": att.file.url,
                         "original_filename": att.original_filename,
-                        "attachment_type": mimetypes.guess_type(att.file.name)[0].split("/")[0] if mimetypes.guess_type(att.file.name)[0] else "document",
+                        "attachment_type": att.attachment_type or "other",
                     } for att in message.attachments.all()
                 ],
                 "timestamp": message.timestamp.isoformat(),
