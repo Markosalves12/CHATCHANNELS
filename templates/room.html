@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
     <title>{{ room_name }} | Zelador Chat</title>
-    <link rel="stylesheet" href="/{% static 'chat/room.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'chat/room.css' %}?v=3">
 </head>
 <body id="chat-app" data-room-id="{{ id_random }}" data-room-name="{{ room_name|escape }}" data-username="{{ request.user.username|escape }}" data-user-id="{{ request.user.id }}" data-history-enabled="{{ room.history_enabled|yesno:'true,false' }}">
     <div class="app-shell">
@@ -179,6 +179,6 @@
     </div>
     {% endif %}
     <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
-    <script src="/{% static 'chat/room.js' %}?v=2" defer></script>
+    <script src="{% static 'chat/room.js' %}?v=3" defer></script>
 </body>
 </html>
