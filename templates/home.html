@@ -3,323 +3,65 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
-    <!-- Para compatibilidade adicional -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZX Chats</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 600px;
-            height: 90vh;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4a76a8 0%, #3a5a80 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .user-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e1e5e9;
-            flex-shrink: 0;
-        }
-
-        .user-info span {
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .logout-form {
-            margin: 0;
-        }
-
-        .logout-btn {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-        }
-
-        .room-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-            margin-bottom: 0;
-        }
-
-        .room-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .room-list::-webkit-scrollbar-thumb {
-            background: #4a76a8;
-            border-radius: 4px;
-        }
-
-        .room-list::-webkit-scrollbar-thumb:hover {
-            background: #3a5a80;
-        }
-
-        .room-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            margin: 10px 0;
-            background: #f8f9fa;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .room-item:hover {
-            background: #e9ecef;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            color: #333;
-            text-decoration: none;
-        }
-
-        .room-name {
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .unread-count {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .private-badge {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-
-        .create-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-top: 2px solid #e1e5e9;
-            flex-shrink: 0;
-            text-align: center;
-        }
-
-        .create-room-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .create-room-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #666;
-            padding: 40px;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .main-footer {
-            background: #f8f9fa;
-            padding: 15px;
-            border-top: 2px solid #e1e5e9;
-            color: #666;
-            font-size: 14px;
-            text-align: center;
-            flex-shrink: 0;
-            margin-top: auto;
-        }
-
-        .main-footer a {
-            color: #4a76a8;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .main-footer a:hover {
-            color: #3a5a80;
-            text-decoration: underline;
-        }
-
-        .float-right {
-            float: right;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                max-width: none;
-            }
-
-            .header {
-                padding: 20px;
-            }
-
-            .room-list {
-                padding: 20px;
-            }
-
-            .user-info {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-                align-items: stretch;
-            }
-
-            .float-right {
-                float: none;
-                margin-top: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .create-room-btn {
-                padding: 12px 20px;
-                font-size: 14px;
-            }
-
-            .room-item {
-                padding: 12px 15px;
-                margin: 8px 0;
-            }
-
-            .user-info span {
-                font-size: 14px;
-            }
-
-            .logout-btn {
-                padding: 10px 15px;
-                font-size: 13px;
-            }
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/grupoorbetechbr/FaviconClientes/refs/heads/main/ZeladorChat/favicon.ico">
+    <title>Conversas | Zelador Chat</title>
+    <link rel="stylesheet" href="{% static 'chat/workspace.css' %}?v=1">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Salas de Chat</h1>
-        </div>
-
-        {% if user.is_authenticated %}
-            <div class="user-info">
-                <span>Logado como: {{ user.email|default:user.username }}</span>
-                <form method="post" action="{% url 'logout' %}" class="logout-form">
-                    {% csrf_token %}
-                    <button type="submit" class="logout-btn">Sair</button>
-                </form>
+    <div class="workspace-shell">
+        <aside class="workspace-sidebar">
+            <div class="brand-row">
+                <a href="{% url 'chat_home' %}" class="brand"><span class="brand-mark">Z</span><span>Zelador Chat</span></a>
             </div>
-        {% endif %}
-
-        <div class="room-list">
-            {% if rooms_with_unread %}
-                {% for item in chat_rooms %}
-                    <a href="{% url 'chat_room' item.id_random %}" class="room-item">
-                        <div>
-                            <span class="room-name">{{ item.name }}</span>
-                            {% if item.is_private %}
-                                <span class="private-badge">Privada</span>
-                            {% endif %}
-                        </div>
-                        {% if item.unread_count > 0 %}
-                            <span class="unread-count">{{ item.unread_count }}</span>
-                        {% endif %}
+            <div class="sidebar-actions">
+                <a href="{% url 'create_room' %}" class="primary-action"><span aria-hidden="true">＋</span> Nova conversa</a>
+                <label class="search-field" for="room-search"><span aria-hidden="true">⌕</span><input type="search" id="room-search" placeholder="Pesquisar conversas" autocomplete="off"></label>
+            </div>
+            <nav class="sidebar-scroll" aria-label="Conversas">
+                <div class="section-heading"><h2>Conversas</h2><span>{{ chat_rooms|length }}</span></div>
+                <div class="conversation-list" id="chat-room-list">
+                    {% for room in chat_rooms %}
+                    <a href="{% url 'chat_room' room.id_random %}" class="chat-room-item" data-room-name="{{ room.name|lower }}">
+                        <span class="conversation-avatar">{{ room.name|first|upper }}</span>
+                        <span class="conversation-copy"><strong>{{ room.name }}</strong><small>{% if room.is_private %}Conversa privada{% else %}Espaço da equipe{% endif %}</small></span>
+                        {% if room.unread_count > 0 %}<span class="unread-count">{{ room.unread_count }}</span>{% endif %}
                     </a>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <p>Nenhuma sala disponível. Crie uma nova sala para começar!</p>
+                    {% empty %}<p class="sidebar-empty">Nenhuma conversa disponível.</p>{% endfor %}
+                    <p class="sidebar-empty" id="no-results" hidden>Nenhuma conversa encontrada.</p>
                 </div>
-            {% endif %}
-        </div>
-
-        <div class="create-form">
-            <a href="{% url 'create_room' %}" class="create-room-btn">Nova Sala</a>
-        </div>
-
-        <footer class="main-footer">
-            <div class="float-right d-none d-sm-block">
-                <b>Versão</b> 1.0
+            </nav>
+            <div class="account-row">
+                <span class="person-avatar">{{ user.username|first|upper }}</span>
+                <span class="account-copy"><strong>{{ user.username }}</strong><small>{{ user.email }}</small></span>
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="icon-button" title="Sair" aria-label="Sair">↪</button></form>
             </div>
-            <strong>Copyright &copy; 2025 <a href="#">ZX</a>.</strong> Todos os direitos reservados.
-            <a><b>Zelador</b>X</a> em parceria com <a><b>{{ em_parceria|default:'Parceiro' }}</b></a>
-        </footer>
+        </aside>
+
+        <main class="workspace-main">
+            <header class="workspace-header">
+                <div><p class="eyebrow">COMUNICAÇÃO</p><h1>Conversas</h1><p class="header-description">Acompanhe os espaços da sua equipe.</p></div>
+                <a href="{% url 'create_room' %}" class="header-action"><span aria-hidden="true">＋</span> Criar conversa</a>
+            </header>
+
+            {% if messages %}<div class="flash-stack">{% for message in messages %}<div class="flash-message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+            <section class="conversation-panel" aria-labelledby="recent-title">
+                <div class="panel-heading"><div><p class="eyebrow">ATIVIDADE</p><h2 id="recent-title">Conversas recentes</h2></div><span class="room-total">{{ chat_rooms|length }} sala{{ chat_rooms|length|pluralize }}</span></div>
+                <div class="room-grid" id="room-grid">
+                    {% for room in chat_rooms %}
+                    <a href="{% url 'chat_room' room.id_random %}" class="room-card" data-room-name="{{ room.name|lower }}">
+                        <span class="room-card-avatar">{{ room.name|first|upper }}</span>
+                        <span class="room-card-copy"><strong>{{ room.name }}</strong><small>{% if room.is_private %}Privada · acesso por convite{% else %}Pública · espaço da equipe{% endif %}</small></span>
+                        {% if room.unread_count > 0 %}<span class="card-unread">{{ room.unread_count }} nova{{ room.unread_count|pluralize }}</span>{% else %}<span class="open-room">Abrir <span aria-hidden="true">→</span></span>{% endif %}
+                    </a>
+                    {% empty %}
+                    <div class="empty-state"><span class="empty-mark">＋</span><h2>Comece uma conversa</h2><p>Crie um espaço para reunir sua equipe e organizar as mensagens.</p><a href="{% url 'create_room' %}" class="header-action">Criar conversa</a></div>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
     </div>
+    <script src="{% static 'chat/workspace.js' %}?v=1" defer></script>
 </body>
 </html>

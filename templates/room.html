@@ -171,7 +171,7 @@
         <div class="modal-content compact-modal">
             <div class="modal-header"><div><span class="eyebrow">ATENÇÃO</span><h2 id="delete-modal-title">Excluir conversa?</h2></div></div>
             <p>Esta ação excluirá <strong>{{ room.name }}</strong> para todos os participantes.</p>
-            <form method="POST" action="{% url 'delete_room' room.name %}" class="modal-footer">{% csrf_token %}
+            <form method="POST" action="{% url 'delete_room' room.id_random %}" class="modal-footer">{% csrf_token %}
                 <button type="button" class="secondary-button" onclick="closeDeleteModal()">Cancelar</button>
                 <button type="submit" class="danger-button">Excluir</button>
             </form>

@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 from .utils import get_user_chat_rooms_data
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from .forms import CreateRoomForm
 from .models import ChatRoom
 from asgiref.sync import async_to_sync
@@ -50,9 +51,11 @@ def chat_home(request):
 
             return redirect('chat_room', id_random=room.id_random)
 
+    for item in rooms_with_unread:
+        item['room'].unread_count = item['unread_count']
+
     context = {
-        'rooms_with_unread': rooms_with_unread,
-        # 'form': form,
+        'chat_rooms': [item['room'] for item in rooms_with_unread],
     }
     return render(request, 'home.html', context)
 
@@ -314,7 +317,7 @@ def add_member_to_room(request, id_random, username):
         return redirect('login')
 
     """Adiciona um membro à sala privada"""
-    room = get_object_or_404(ChatRoom, name=id_random)
+    room = get_object_or_404(ChatRoom, id_random=id_random)
 
     # Apenas o criador da sala pode adicionar membros
     if room.created_by != request.user:
@@ -372,7 +375,7 @@ def get_room_members(request, id_random):
         return redirect('login')
 
     """Retorna os membros de uma sala privada"""
-    room = get_object_or_404(ChatRoom, name=id_random)
+    room = get_object_or_404(ChatRoom, id_random=id_random)
 
     if not room.can_user_access(request.user):
         return JsonResponse({'error': 'Acesso negado'}, status=403)
@@ -396,6 +399,7 @@ def get_room_members(request, id_random):
     return JsonResponse({'members': members_list})
 
 
+@require_POST
 def delete_room(request, id_random):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -409,30 +413,34 @@ def delete_room(request, id_random):
         return redirect('chat_room', id_random=room.id_random)
 
     channel_layer = get_channel_layer()
+    room_name = room.name
+    room_group_name = f"chat_{room.id_random}"
+    affected_users = list(room.members.all())
+    if room.created_by not in affected_users:
+        affected_users.append(room.created_by)
 
-    # Notificar todos os usuários da sala que ela foi excluída
+    # A conexão WebSocket usa o identificador aleatório, nunca o nome da sala.
     async_to_sync(channel_layer.group_send)(
-        f"chat_{room.name}",
+        room_group_name,
         {
-            "type": "room_deleted",  # vai chamar room_deleted no consumer
-            "room_name": room.name,
+            "type": "room_deleted",
+            "room_name": room_name,
         }
     )
 
-    # Atualizar a sidebar de todos os membros
-    for member in room.members.all():
-        user_group_name = f"user_{member.id}"
-        updated_room_data = get_user_chat_rooms_data(member)
+    room.delete()
+
+    # A lista precisa ser calculada depois da exclusão para não reenviar a sala removida.
+    for member in affected_users:
         async_to_sync(channel_layer.group_send)(
-            user_group_name,
+            f"user_{member.id}",
             {
                 "type": "unread_count_update",
-                "room_data": updated_room_data,
+                "room_data": get_user_chat_rooms_data(member),
             }
         )
 
-    room.delete()
-    messages.success(request, f'A sala "{room.name}" foi excluída.')
+    messages.success(request, f'A sala "{room_name}" foi excluída.')
     return redirect('chat_home')
 
 
@@ -517,7 +525,7 @@ def mark_all_as_read(request, id_random):
         return redirect('login')
 
     """Marca todas as mensagens não lidas como lidas"""
-    room = get_object_or_404(ChatRoom, name=id_random)
+    room = get_object_or_404(ChatRoom, id_random=id_random)
 
     if not room.can_user_access(request.user):
         return JsonResponse({'error': 'Acesso negado'}, status=403)

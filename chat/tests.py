@@ -59,3 +59,42 @@ class ChatHistoryPermissionTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class DeleteRoomTests(TestCase):
+    def setUp(self):
+        self.creator = Gerente.objects.create_user(
+            email='dono@example.com',
+            username='Dono',
+            password='senha-segura',
+        )
+        self.outsider = Gerente.objects.create_user(
+            email='externo-delete@example.com',
+            username='ExternoDelete',
+            password='senha-segura',
+        )
+        self.room = ChatRoom.objects.create(
+            name='Sala para excluir',
+            created_by=self.creator,
+        )
+
+    def test_delete_requires_post(self):
+        self.client.force_login(self.creator)
+        response = self.client.get(reverse('delete_room', args=[self.room.id_random]))
+
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(ChatRoom.objects.filter(pk=self.room.pk).exists())
+
+    def test_creator_can_delete_room_by_id_random(self):
+        self.client.force_login(self.creator)
+        response = self.client.post(reverse('delete_room', args=[self.room.id_random]))
+
+        self.assertRedirects(response, reverse('chat_home'))
+        self.assertFalse(ChatRoom.objects.filter(pk=self.room.pk).exists())
+
+    def test_other_user_cannot_delete_room(self):
+        self.client.force_login(self.outsider)
+        response = self.client.post(reverse('delete_room', args=[self.room.id_random]))
+
+        self.assertRedirects(response, reverse('chat_room', args=[self.room.id_random]))
+        self.assertTrue(ChatRoom.objects.filter(pk=self.room.pk).exists())
