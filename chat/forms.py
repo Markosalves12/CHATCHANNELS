@@ -52,7 +52,7 @@ class CreateRoomForm(forms.ModelForm):
             qs = User.objects.filter(
                 empresasecundaria__empresaprimaria__id_random__in=empresas_primarias_ids,
                 status='Mobilizado'
-            ).exclude(id=self.request.user.id).order_by('username')
+            ).exclude(id=self.request.user.id).distinct().order_by('username')
 
 
             self.fields['participants'].queryset = qs

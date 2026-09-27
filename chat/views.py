@@ -176,7 +176,7 @@ def create_room(request):
     return render(request, 'create_room.html', {
         'form': form,
         'total_users': total_users,
-        'available_users': Gerente.objects.exclude(id=request.user.id).order_by('username')[:50]
+        'available_users': Gerente.objects.exclude(id=request.user.id).distinct().order_by('username')[:50]
     })
 
 
@@ -615,7 +615,7 @@ def search_users(request):
         Q(email__icontains=query) |
         Q(first_name__icontains=query) |
         Q(last_name__icontains=query)
-    ).exclude(id=request.user.id).values('id', 'username', 'email', 'first_name', 'last_name')[:10]
+    ).exclude(id=request.user.id).distinct().values('id', 'username', 'email', 'first_name', 'last_name')[:10]
 
     return JsonResponse({'users': list(users)})
 
@@ -642,7 +642,7 @@ def get_available_users(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         search_term = request.GET.get('q', '')
 
-        users = Gerente.objects.exclude(id=request.user.id).order_by('username')
+        users = Gerente.objects.exclude(id=request.user.id).distinct().order_by('username')
 
         if search_term:
             users = users.filter(
