@@ -42,9 +42,13 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Configs extras recomendadas para Heroku (evita problemas com proxy/SSL)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True  # força https
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# No runserver local não há https: desliga o redirecionamento e os cookies seguros
+import sys
+RODANDO_LOCAL = 'runserver' in sys.argv
+
+SECURE_SSL_REDIRECT = not RODANDO_LOCAL  # força https (Heroku)
+SESSION_COOKIE_SECURE = not RODANDO_LOCAL
+CSRF_COOKIE_SECURE = not RODANDO_LOCAL
 
 AUTH_USER_MODEL = 'gerente.Gerente'
 AUTHENTICATION_BACKENDS = (
