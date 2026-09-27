@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qsl
-from google.oauth2 import service_account
+# from google.oauth2 import service_account  # Google Cloud Storage desativado (uso local)
 
 load_dotenv()
 
@@ -193,27 +193,39 @@ STATIC_ROOT = os.path.join(
 
 STATIC_URL = 'static/'
 
+# --- Armazenamento local (desenvolvimento) ---
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-        "OPTIONS": {
-            "bucket_name": "production_zeladorchat",
-        },
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-        "OPTIONS": {
-            "bucket_name": "production_zeladorchat",  # Nome do seu bucket
-            "location": "static",  # Diretório dentro do bucket para os arquivos estáticos
-        },
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-GS_PROJECT_ID = "bucketzeladorx"
+# --- Google Cloud Storage (desativado; descomente para voltar) ---
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+#         "OPTIONS": {
+#             "bucket_name": "production_zeladorchat",
+#         },
+#     },
+#     "staticfiles": {
+#         "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+#         "OPTIONS": {
+#             "bucket_name": "production_zeladorchat",  # Nome do seu bucket
+#             "location": "static",  # Diretório dentro do bucket para os arquivos estáticos
+#         },
+#     },
+# }
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "bucketzeladorx-047b955782da.json")
-)
+# GS_PROJECT_ID = "bucketzeladorx"
+
+# GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+#     os.path.join(BASE_DIR, "bucketzeladorx-047b955782da.json")
+# )
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = f"https://storage.googleapis.com/{STORAGES['default']['OPTIONS']['bucket_name']}/media/"
+MEDIA_URL = "/media/"
+# MEDIA_URL = f"https://storage.googleapis.com/{STORAGES['default']['OPTIONS']['bucket_name']}/media/"
