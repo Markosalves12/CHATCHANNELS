@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import re_path
+from django.views.static import serve
 
 urlpatterns = [
     path("chat/", include("chat.urls")),
@@ -26,4 +28,8 @@ urlpatterns = [
     path("message/", include("message.urls")),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# static() só funciona com DEBUG=True; com a pasta media local, servimos direto
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+]
