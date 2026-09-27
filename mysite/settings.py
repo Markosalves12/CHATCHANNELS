@@ -25,7 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
+# Login compartilhado da família: a SECRET_KEY precisa ser a MESMA do ZeladorX
+SECRET_KEY_PADRAO = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
+SECRET_KEY = os.getenv('SECRET_KEY') or SECRET_KEY_PADRAO
+# SECRET_KEY = 'django-insecure-t+_dily3s3qm+@4k()5@$g3t&2$=6dvz-#h01i%@3t(7*4*!si'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -49,6 +52,16 @@ RODANDO_LOCAL = 'runserver' in sys.argv
 SECURE_SSL_REDIRECT = not RODANDO_LOCAL  # força https (Heroku)
 SESSION_COOKIE_SECURE = not RODANDO_LOCAL
 CSRF_COOKIE_SECURE = not RODANDO_LOCAL
+
+# ============================================================
+# SESSÃO COMPARTILHADA (ZeladorX + ChatChannels)
+# ============================================================
+# Mesmo nome de cookie, mesma SECRET_KEY e mesmo banco (tabela django_session).
+# Local: os dois rodam em 127.0.0.1 (portas diferentes compartilham o cookie).
+# Produção: cookie vale para zeladorx.com.br e chat.zeladorx.com.br.
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_DOMAIN = None if RODANDO_LOCAL else '.zeladorx.com.br'
+CSRF_COOKIE_DOMAIN = None if RODANDO_LOCAL else '.zeladorx.com.br'
 
 AUTH_USER_MODEL = 'gerente.Gerente'
 AUTHENTICATION_BACKENDS = (
@@ -138,17 +151,31 @@ else:
     tmpPostgres = urlparse(os.getenv("DATABASE_URL_PROD"))
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
-        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+if RODANDO_LOCAL:
+    # Local: MESMO banco do ZeladorX, para o login valer nos dois sistemas
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_LOCAL_NAME', 'zeladorx'),
+            'USER': os.getenv('DB_LOCAL_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_LOCAL_PASSWORD', 'PnCdEL'),
+            'HOST': os.getenv('DB_LOCAL_HOST', 'localhost'),
+            'PORT': os.getenv('DB_LOCAL_PORT', '5432'),
+        }
     }
-}
+else:
+    # Heroku / Neon
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': tmpPostgres.path.replace('/', ''),
+            'USER': tmpPostgres.username,
+            'PASSWORD': tmpPostgres.password,
+            'HOST': tmpPostgres.hostname,
+            'PORT': 5432,
+            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
